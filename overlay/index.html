@@ -5,7 +5,7 @@
 <style>
 body {
   margin: 0;
-  background: transparent;
+  background: #101827;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
@@ -13,12 +13,32 @@ body {
   position: absolute;
   top: 20px;
   left: 20px;
-  width: 760px;
+  width: auto;
+  max-width: calc(100% - 40px);
   color: #eef2ff;
 }
 
+@media (max-width: 660px) {
+  .overlay {
+    left: 10px;
+    top: 10px;
+  }
+  .body-row,
+  .config-row {
+    flex-direction: column;
+  }
+  .config-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .config-panel {
+    margin-top: 380px;
+  }
+}
+
 .panel {
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
   padding: 18px 20px;
   border-radius: 18px;
   background: rgba(12, 15, 27, 0.88);
@@ -58,7 +78,34 @@ body {
 
 .rank-img.animate {
   transform: scale(1.12);
-  filter: drop-shadow(0 0 18px rgba(76, 255, 154, 0.55));
+  filter: drop-shadow(0 0 22px rgba(76, 255, 154, 0.8));
+  animation: rank-glimmer 0.9s ease, rank-flip 0.9s ease;
+}
+
+@keyframes rank-glimmer {
+  0%, 100% {
+    filter: drop-shadow(0 0 18px rgba(76, 255, 154, 0.4));
+    box-shadow: 0 0 0 rgba(76, 255, 154, 0);
+  }
+  50% {
+    filter: drop-shadow(0 0 28px rgba(76, 255, 154, 1));
+    box-shadow: 0 0 32px rgba(76, 255, 154, 0.35);
+  }
+}
+
+@keyframes rank-flip {
+  0% {
+    transform: perspective(400px) scale(1.0) rotateY(0deg);
+  }
+  40% {
+    transform: perspective(400px) scale(1.08) rotateY(90deg);
+  }
+  60% {
+    transform: perspective(400px) scale(1.08) rotateY(90deg);
+  }
+  100% {
+    transform: perspective(400px) scale(1.0) rotateY(0deg);
+  }
 }
 
 .rank-info {
@@ -78,31 +125,44 @@ body {
 }
 
 .status-card {
-  flex: 1 1 200px;
+  flex: 1 1 260px;
   justify-content: flex-end;
 }
 
+
 .status-box {
   width: 100%;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
 }
 
 .status-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
+}
+
+.status-row.compact {
+  justify-content: flex-end;
+}
+
+.status-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .status-label {
   color: #94a3b8;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
 }
 
 .status {
@@ -115,19 +175,69 @@ body {
 .status.loading { color: #f8cd69; }
 
 .last-updated {
-  margin-top: 8px;
-  font-size: 12px;
+  margin: 0;
+  font-size: 11px;
   color: #94a3b8;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.top-row {
+  justify-content: flex-start;
 }
 
 .body-row {
   margin-top: 16px;
+  align-items: flex-start;
 }
 
-.score-card {
-  flex: 1 1 320px;
+.agents-row {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.agent-history {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.agent-item {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.agent-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rank-card {
+  flex: 0 0 auto;
+  align-items: flex-start;
+}
+
+.rank-info {
+  display: flex;
   flex-direction: column;
-  gap: 10px;
+  width: 420px;
+  max-width: calc(100vw - 160px);
+  gap: 12px;
+}
+
+.rank-rating-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .rr-label {
@@ -137,17 +247,40 @@ body {
   letter-spacing: 0.14em;
 }
 
-.rr-value {
-  font-size: 32px;
-  font-weight: 800;
+.rank-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rank-name,
+.rr-value,
+.rank-separator {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: inherit;
+}
+
+.rank-separator {
+  font-size: 24px;
 }
 
 .progress-bar {
-  width: 100%;
+  width: 420px;
+  max-width: 420px;
   height: 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
+}
+
+.score-card {
+  display: none;
+}
+
+.stats-grid {
+  display: none;
 }
 
 .progress-fill {
@@ -158,31 +291,107 @@ body {
   transition: width 0.35s ease;
 }
 
-.stats-grid {
-  flex: 1 1 280px;
+.config-panel {
+  width: 100%;
+  margin-top: 520px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(16, 24, 39, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.14);
+}
+
+.config-heading {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 14px;
+  color: #eef2ff;
+}
+
+.config-group {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
-.stat {
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.config-group:last-of-type {
+  margin-bottom: 0;
 }
 
-.stat-name {
+.config-group-title {
   font-size: 11px;
   color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  margin-bottom: 6px;
+  letter-spacing: 0.14em;
 }
 
-.stat-value {
-  font-size: 20px;
+.config-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.config-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-item label {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.config-input,
+.config-select {
+  height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #eef2ff;
+}
+
+.config-input[type="color"] {
+  padding: 0;
+}
+
+.config-actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.config-button {
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: none;
+  background: #4cff9a;
+  color: #08110a;
   font-weight: 700;
+  cursor: pointer;
+}
+
+.config-button:hover {
+  background: #3cd87f;
+}
+
+.config-status {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.config-status.success {
+  color: #4cff9a;
+}
+
+.config-status.error {
+  color: #ff7b7b;
 }
 
 .history-row {
@@ -201,22 +410,46 @@ body {
 .history {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .history-item {
-  width: 50px;
+  min-width: 58px;
+  padding: 0 10px;
   height: 44px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border-radius: 14px;
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   color: #111827;
 }
 
-.history-item.gain { background: #4cff9a; }
-.history-item.loss { background: #ff5c5c; color: #ffffff; }
+.history-agent {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.26);
+}
+
+.history-value {
+  display: inline-block;
+}
+
+.history-item.gain { background: #4cff9a; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28); }
+.history-item.loss { background: #ff5c5c; color: #ffffff; text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35); }
 .history-item.neutral { background: rgba(148, 163, 184, 0.24); color: #eef2ff; }
 </style>
 </head>
@@ -225,58 +458,208 @@ body {
 <div class="overlay">
   <div class="panel">
     <div class="top-row">
-      <div class="rank-card">
-        <img id="rankImg" class="rank-img" src="" alt="Rank icon">
-        <div class="rank-info">
-          <div id="rank" class="rank-name">Loading...</div>
-          <div id="division" class="rank-subtitle">Valorant rank tracker</div>
-        </div>
-      </div>
       <div class="status-card">
         <div class="status-box">
           <div class="status-row">
-            <div class="status-label">Connection</div>
-            <div id="status" class="status loading">Connecting...</div>
+            <div id="statusText" class="status-text">
+              <div class="status-label">Connection</div>
+              <div id="status" class="status loading">Connecting...</div>
+            </div>
+            <div id="lastUpdated" class="last-updated">Last updated: --</div>
           </div>
-          <div id="lastUpdated" class="last-updated">Last updated: --</div>
         </div>
       </div>
+    </div>
+
+    <div id="agentRow" class="agents-row">
+      <div id="agentHistory" class="agent-history"></div>
     </div>
 
     <div class="body-row">
-      <div class="score-card">
-        <div class="rr-label">Rank Rating</div>
-        <div id="rr" class="rr-value">--</div>
-        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-      </div>
-      <div class="stats-grid">
-        <div class="stat">
-          <div class="stat-name">Winrate</div>
-          <div id="winrate" class="stat-value">--</div>
-        </div>
-        <div class="stat">
-          <div class="stat-name">Streak</div>
-          <div id="streak" class="stat-value">--</div>
+      <div class="rank-card">
+        <img id="rankImg" class="rank-img" src="" alt="Rank icon">
+        <div class="rank-info">
+          <div class="rank-rating-block">
+            <div class="rr-label">Rank Rating</div>
+            <div class="rank-value-row">
+              <div id="rank" class="rank-name">Loading...</div>
+              <div class="rank-separator">-</div>
+              <div id="rr" class="rr-value">--</div>
+            </div>
+            <div id="division" class="rank-subtitle">Valorant rank tracker</div>
+          </div>
+          <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
         </div>
       </div>
     </div>
-
     <div class="history-row">
-      <div class="section-title">Recent matches (oldest → newest)</div>
       <div id="history" class="history"></div>
     </div>
   </div>
 </div>
 
+<div class="config-panel">
+  <div class="config-heading">Overlay Settings</div>
+  <div class="config-group">
+    <div class="config-group-title">Player</div>
+    <div class="config-row">
+      <div class="config-item">
+        <label for="playerNameInput">Player name</label>
+        <input id="playerNameInput" class="config-input" type="text" placeholder="soulkratosgg">
+      </div>
+      <div class="config-item">
+        <label for="playerTagInput">Player tag</label>
+        <input id="playerTagInput" class="config-input" type="text" placeholder="111">
+      </div>
+      <div class="config-item">
+        <label for="playerRegionInput">Region</label>
+        <select id="playerRegionInput" class="config-select">
+          <option value="ap">AP</option>
+          <option value="eu">EU</option>
+          <option value="na">NA</option>
+          <option value="kr">KR</option>
+          <option value="latam">LATAM</option>
+          <option value="br">BR</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-group">
+    <div class="config-group-title">Theme</div>
+    <div class="config-row">
+      <div class="config-item">
+        <label for="bgColorInput">Background</label>
+        <input id="bgColorInput" class="config-input" type="color" value="#0c0f1b">
+      </div>
+      <div class="config-item">
+        <label for="textColorInput">Text</label>
+        <input id="textColorInput" class="config-input" type="color" value="#eef2ff">
+      </div>
+      <div class="config-item">
+        <label for="borderStyleInput">Border style</label>
+        <select id="borderStyleInput" class="config-select">
+          <option value="solid">Solid</option>
+          <option value="dashed">Dashed</option>
+          <option value="dotted">Dotted</option>
+          <option value="double">Double</option>
+          <option value="groove">Groove</option>
+          <option value="ridge">Ridge</option>
+          <option value="inset">Inset</option>
+          <option value="outset">Outset</option>
+          <option value="none">None</option>
+        </select>
+      </div>
+      <div class="config-item">
+        <label for="transparentOverlayInput">Transparent overlay</label>
+        <input id="transparentOverlayInput" class="config-input" type="checkbox">
+      </div>
+    </div>
+  </div>
+
+  <div class="config-group">
+    <div class="config-group-title">Visibility</div>
+    <div class="config-row">
+      <div class="config-item">
+        <label for="showConnectionInput">Show connection</label>
+        <input id="showConnectionInput" class="config-input" type="checkbox" checked>
+      </div>
+      <div class="config-item">
+        <label for="showLastUpdatedInput">Show last updated</label>
+        <input id="showLastUpdatedInput" class="config-input" type="checkbox" checked>
+      </div>
+      <div class="config-item">
+        <label for="showAgentIconsInput">Show agent icons</label>
+        <input id="showAgentIconsInput" class="config-input" type="checkbox" checked>
+      </div>
+    </div>
+  </div>
+
+  <div class="config-group">
+    <div class="config-group-title">Data</div>
+    <div class="config-row">
+      <div class="config-item">
+        <label for="maxMatchResultsInput">Max games shown (1-12)</label>
+        <input id="maxMatchResultsInput" class="config-input" type="number" min="1" max="12" step="1" value="10">
+      </div>
+    </div>
+  </div>
+  <div class="config-actions">
+    <button id="saveConfigBtn" class="config-button" type="button">Save config</button>
+    <div id="saveStatus" class="config-status">Ready</div>
+  </div>
+</div>
+
 <script>
-const API_URL = "http://localhost:3000/rank";
+const API_PATH = "/rank";
+const CONFIG_PATH = "/config";
 const DEFAULT_IMAGE_PATH = "file:///C:/Users/user/Downloads/rank_png/";
+const DEFAULT_BG_COLOR = "#0c0f1b";
+const DEFAULT_TEXT_COLOR = "#eef2ff";
+const DEFAULT_BORDER_STYLE = "solid";
 
 let displayedRR = null;
 let targetRR = null;
 let rrAnimationFrame = null;
 let lastTier = null;
 let rankImageBasePath = DEFAULT_IMAGE_PATH;
+let rankAnimationIntervalMs = 15000;
+let rankAnimationTimer = null;
+let activeRankAnimationIntervalMs = null;
+let lastConnectedOrigin = "";
+let maxMatchResults = 10;
+let showAgentIcons = true;
+const LAST_AGENT_COUNT = 10;
+
+function getRequestOrigins() {
+  const origins = [];
+  if (window.location && /^https?:$/.test(window.location.protocol)) {
+    origins.push(window.location.origin);
+  }
+  origins.push("http://127.0.0.1:3000");
+  origins.push("http://localhost:3000");
+  origins.push("http://127.0.0.1:3001");
+  origins.push("http://localhost:3001");
+  return [...new Set(origins)];
+}
+
+function getCandidateUrls(pathOrUrl) {
+  if (/^https?:\/\//i.test(pathOrUrl)) {
+    return [pathOrUrl];
+  }
+  const normalizedPath = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
+  return getRequestOrigins().map(origin => `${origin}${normalizedPath}`);
+}
+
+function buildRankImageUrl(basePath, fileName) {
+  if (!fileName) return "";
+
+  const safeBase = typeof basePath === "string" ? basePath : "";
+  if (/^https?:\/\//i.test(safeBase) || safeBase.startsWith("file:///")) {
+    return safeBase + fileName;
+  }
+
+  if (safeBase.startsWith("/")) {
+    const origin = lastConnectedOrigin || (window.location && /^https?:$/.test(window.location.protocol)
+      ? window.location.origin
+      : "http://127.0.0.1:3000");
+    return `${origin}${safeBase}${fileName}`;
+  }
+
+  return safeBase + fileName;
+}
+
+function resolveRankIconUrl(rankPayload, imageBasePath, tier) {
+  const localIcon = buildRankImageUrl(imageBasePath, getRankImage(tier));
+  const remoteIcon = rankPayload?.images?.large || rankPayload?.images?.small || "";
+
+  // OBS often blocks file:// URLs; prefer https icon when local filesystem path is used.
+  if (typeof imageBasePath === "string" && imageBasePath.startsWith("file:///")) {
+    return remoteIcon || localIcon;
+  }
+
+  return localIcon || remoteIcon;
+}
 
 function getRankImage(tier) {
   if (!tier) return "";
@@ -286,8 +669,227 @@ function getRankImage(tier) {
 
 function animateRankIcon() {
   const img = document.getElementById("rankImg");
+  img.classList.remove("animate");
+  void img.offsetWidth;
+
+  const cleanup = () => {
+    img.classList.remove("animate");
+    img.removeEventListener("animationend", cleanup);
+  };
+
+  img.addEventListener("animationend", cleanup);
   img.classList.add("animate");
-  setTimeout(() => img.classList.remove("animate"), 360);
+}
+
+function scheduleRankAnimation(intervalMs) {
+  if (!Number.isFinite(intervalMs) || intervalMs <= 0) {
+    intervalMs = 15000;
+  }
+  if (activeRankAnimationIntervalMs === intervalMs && rankAnimationTimer) {
+    return;
+  }
+  activeRankAnimationIntervalMs = intervalMs;
+  clearInterval(rankAnimationTimer);
+  rankAnimationIntervalMs = intervalMs;
+  rankAnimationTimer = setInterval(animateRankIcon, rankAnimationIntervalMs);
+}
+
+function applyTheme(backgroundColor, textColor, borderStyle, transparentOverlay) {
+  const panel = document.querySelector(".panel");
+  const overlay = document.querySelector(".overlay");
+  const bgColor = transparentOverlay ? "transparent" : (backgroundColor || DEFAULT_BG_COLOR);
+  const textCol = textColor || DEFAULT_TEXT_COLOR;
+  const border = borderStyle || DEFAULT_BORDER_STYLE;
+  panel.style.background = bgColor;
+  panel.style.borderStyle = border;
+  panel.style.borderColor = border === "none" ? "transparent" : "rgba(255, 255, 255, 0.12)";
+  panel.style.borderWidth = border === "none" ? "0px" : "1px";
+  overlay.style.color = textCol;
+  document.querySelectorAll(".status-label, .rank-name, .rr-value, .rank-separator, .rank-subtitle, .rr-label, label, .config-heading, .config-status").forEach(el => {
+    el.style.color = textCol;
+  });
+}
+
+function applyStatusVisibility(showConnection, showLastUpdated) {
+  const statusTextEl = document.getElementById("statusText");
+  const lastUpdatedEl = document.getElementById("lastUpdated");
+  const statusRowEl = document.querySelector(".status-row");
+  const statusCardEl = document.querySelector(".status-card");
+  const showConn = showConnection !== false;
+  const showUpdated = showLastUpdated !== false;
+
+  if (statusTextEl) {
+    statusTextEl.style.display = showConn ? "" : "none";
+  }
+  if (lastUpdatedEl) {
+    lastUpdatedEl.style.display = showUpdated ? "" : "none";
+  }
+  if (statusRowEl) {
+    statusRowEl.classList.toggle("compact", (!showConn && showUpdated) || (showConn && !showUpdated));
+  }
+  if (statusCardEl) {
+    statusCardEl.style.display = (!showConn && !showUpdated) ? "none" : "";
+  }
+}
+
+function clampMatchResults(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 10;
+  return Math.max(1, Math.min(12, Math.floor(parsed)));
+}
+
+function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOverlay, showConnection, showLastUpdated, showAgentIconsValue, configuredMaxMatchResults, player) {
+  const bgInput = document.getElementById("bgColorInput");
+  const textInput = document.getElementById("textColorInput");
+  const borderInput = document.getElementById("borderStyleInput");
+  const transparentInput = document.getElementById("transparentOverlayInput");
+  const showConnectionInput = document.getElementById("showConnectionInput");
+  const showLastUpdatedInput = document.getElementById("showLastUpdatedInput");
+  const showAgentIconsInput = document.getElementById("showAgentIconsInput");
+  const maxMatchResultsInput = document.getElementById("maxMatchResultsInput");
+  const playerNameInput = document.getElementById("playerNameInput");
+  const playerTagInput = document.getElementById("playerTagInput");
+  const playerRegionInput = document.getElementById("playerRegionInput");
+  if (bgInput) bgInput.value = backgroundColor || DEFAULT_BG_COLOR;
+  if (textInput) textInput.value = textColor || DEFAULT_TEXT_COLOR;
+  if (borderInput) borderInput.value = borderStyle || DEFAULT_BORDER_STYLE;
+  if (transparentInput) transparentInput.checked = Boolean(transparentOverlay);
+  if (showConnectionInput && typeof showConnection === "boolean") showConnectionInput.checked = showConnection;
+  if (showLastUpdatedInput && typeof showLastUpdated === "boolean") showLastUpdatedInput.checked = showLastUpdated;
+  if (showAgentIconsInput && typeof showAgentIconsValue === "boolean") showAgentIconsInput.checked = showAgentIconsValue;
+  showAgentIcons = showAgentIconsValue !== false;
+  maxMatchResults = clampMatchResults(configuredMaxMatchResults);
+  if (maxMatchResultsInput) maxMatchResultsInput.value = String(maxMatchResults);
+  if (playerNameInput) playerNameInput.value = player?.name || "";
+  if (playerTagInput) playerTagInput.value = player?.tag || "";
+  if (playerRegionInput) playerRegionInput.value = player?.region || "ap";
+}
+
+async function fetchWithFallback(pathOrUrl, options) {
+  const candidates = getCandidateUrls(pathOrUrl);
+  let firstResponse = null;
+  let lastError = null;
+
+  for (const candidate of candidates) {
+    try {
+      const response = await fetch(candidate, options);
+      if (response.ok) {
+        lastConnectedOrigin = new URL(candidate).origin;
+        return response;
+      }
+      if (!firstResponse) {
+        firstResponse = response;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (firstResponse) {
+    return firstResponse;
+  }
+
+  throw lastError || new Error("Unable to connect to overlay server");
+}
+
+function loadConfig() {
+  fetchWithFallback(CONFIG_PATH, { cache: "no-store" })
+    .then(res => res.json())
+    .then(data => {
+      setConfigInputs(
+        data.backgroundColor,
+        data.textColor,
+        data.borderStyle,
+        data.transparentOverlay,
+        data.showConnection,
+        data.showLastUpdated,
+        data.showAgentIcons,
+        data.maxMatchResults,
+        data.player
+      );
+      applyTheme(data.backgroundColor, data.textColor, data.borderStyle, data.transparentOverlay);
+      const showConnectionValue = typeof data.showConnection === "boolean"
+        ? data.showConnection
+        : document.getElementById("showConnectionInput")?.checked;
+      const showLastUpdatedValue = typeof data.showLastUpdated === "boolean"
+        ? data.showLastUpdated
+        : document.getElementById("showLastUpdatedInput")?.checked;
+      applyStatusVisibility(showConnectionValue, showLastUpdatedValue);
+    })
+    .catch(() => {
+      const statusEl = document.getElementById("saveStatus");
+      if (statusEl) {
+        statusEl.textContent = "Unable to load config. Start server and use http://127.0.0.1:3000 in OBS.";
+        statusEl.classList.add("error");
+      }
+    });
+}
+
+function saveConfig() {
+  const backgroundColor = document.getElementById("bgColorInput").value;
+  const textColor = document.getElementById("textColorInput").value;
+  const borderStyle = document.getElementById("borderStyleInput").value;
+  const transparentOverlay = document.getElementById("transparentOverlayInput").checked;
+  const showConnection = document.getElementById("showConnectionInput").checked;
+  const showLastUpdated = document.getElementById("showLastUpdatedInput").checked;
+  const showAgentIconsValue = document.getElementById("showAgentIconsInput").checked;
+  const maxMatchResultsValue = clampMatchResults(document.getElementById("maxMatchResultsInput").value);
+  const playerName = document.getElementById("playerNameInput").value.trim();
+  const playerTag = document.getElementById("playerTagInput").value.trim();
+  const playerRegion = document.getElementById("playerRegionInput").value;
+  const statusEl = document.getElementById("saveStatus");
+
+  if (!statusEl) return;
+  statusEl.classList.remove("error", "success");
+  statusEl.textContent = "Saving...";
+
+  if (!playerName || !playerTag || !playerRegion) {
+    statusEl.textContent = "Player name, tag, and region are required";
+    statusEl.classList.add("error");
+    return;
+  }
+
+  fetchWithFallback(CONFIG_PATH, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      backgroundColor,
+      textColor,
+      borderStyle,
+      transparentOverlay,
+      showConnection,
+      showLastUpdated,
+      showAgentIcons: showAgentIconsValue,
+      maxMatchResults: maxMatchResultsValue,
+      player: { name: playerName, tag: playerTag, region: playerRegion }
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        statusEl.textContent = "Saved!";
+        statusEl.classList.add("success");
+        applyTheme(backgroundColor, textColor, borderStyle, transparentOverlay);
+        applyStatusVisibility(showConnection, showLastUpdated);
+        showAgentIcons = showAgentIconsValue;
+        maxMatchResults = maxMatchResultsValue;
+      } else {
+        statusEl.textContent = data.error || "Save failed";
+        statusEl.classList.add("error");
+      }
+      setTimeout(() => {
+        statusEl.textContent = "Ready";
+        statusEl.classList.remove("error", "success");
+      }, 2500);
+    })
+    .catch(() => {
+      statusEl.textContent = "Network error";
+      statusEl.classList.add("error");
+      setTimeout(() => {
+        statusEl.textContent = "Ready";
+        statusEl.classList.remove("error", "success");
+      }, 2500);
+    });
 }
 
 function updateProgressBar(rr) {
@@ -304,7 +906,7 @@ function setStatus(message, state) {
 
 function updateRRValue(value, direction = "") {
   const el = document.getElementById("rr");
-  el.textContent = `RR: ${value}`;
+  el.textContent = `${value} RR`;
   el.style.color = direction === "up" ? "#4cff9a" : direction === "down" ? "#ff5c5c" : "#eef2ff";
   updateProgressBar(value);
 }
@@ -343,6 +945,11 @@ function formatTimestamp(timestamp) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
+function applyIdVisibility(show) {
+  const divisionEl = document.getElementById("division");
+  if (divisionEl) divisionEl.style.display = show ? "" : "none";
+}
+
 function renderMatches(matches) {
   const historyEl = document.getElementById("history");
   historyEl.innerHTML = "";
@@ -354,11 +961,11 @@ function renderMatches(matches) {
     return;
   }
 
-  const displayMatches = [...matches].reverse();
+  const displayMatches = [...matches].slice(0, maxMatchResults).reverse();
   displayMatches.forEach(entry => {
     const points = typeof entry.points === "number" ? entry.points : null;
     const text = points === null
-      ? entry.result
+      ? "--"
       : `${points > 0 ? "+" : ""}${points}`;
     const state = points === null
       ? entry.result === "W" ? "gain" : "loss"
@@ -366,21 +973,78 @@ function renderMatches(matches) {
 
     const item = document.createElement("div");
     item.className = `history-item ${state}`;
-    item.textContent = text;
+
+    const valueEl = document.createElement("span");
+    valueEl.className = "history-value";
+    valueEl.textContent = text;
+    item.appendChild(valueEl);
+
     item.title = points === null
-      ? `${entry.result === "W" ? "Win" : "Loss"}`
-      : `${entry.result === "W" ? "Win" : "Loss"} ${text}`;
+      ? `${entry.result === "W" ? "Win" : "Loss"}${entry.agentName ? ` • ${entry.agentName}` : ""}`
+      : `${entry.result === "W" ? "Win" : "Loss"} ${text}${entry.agentName ? ` • ${entry.agentName}` : ""}`;
+    historyEl.appendChild(item);
+  });
+}
+
+function renderAgentHistory(matches) {
+  const rowEl = document.getElementById("agentRow");
+  const historyEl = document.getElementById("agentHistory");
+  if (!rowEl || !historyEl) return;
+
+  historyEl.innerHTML = "";
+  rowEl.style.display = showAgentIcons ? "" : "none";
+  if (!showAgentIcons) return;
+
+  const entries = Array.isArray(matches) ? matches.slice(0, LAST_AGENT_COUNT) : [];
+  if (entries.length === 0) {
+    for (let i = 0; i < LAST_AGENT_COUNT; i++) {
+      const item = document.createElement("div");
+      item.className = "agent-item";
+      historyEl.appendChild(item);
+    }
+    return;
+  }
+
+  entries.forEach((entry) => {
+    const item = document.createElement("div");
+    item.className = "agent-item";
+    item.title = entry.agentName || "Agent";
+
+    if (entry.agentIcon) {
+      const img = document.createElement("img");
+      img.src = entry.agentIcon;
+      img.alt = entry.agentName || "Agent";
+      img.loading = "lazy";
+      item.appendChild(img);
+    }
+
     historyEl.appendChild(item);
   });
 }
 
 async function fetchRank() {
   try {
-    const res = await fetch(API_URL, { cache: "no-store" });
+    const res = await fetchWithFallback(API_PATH, { cache: "no-store" });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
     const json = await res.json();
 
-    if (!json || !json.rank) {
-      throw new Error("Invalid overlay data");
+    if (!json || typeof json !== "object") {
+      throw new Error("Invalid overlay payload");
+    }
+
+    applyTheme(json.backgroundColor, json.textColor, json.borderStyle, json.transparentOverlay);
+    document.getElementById("lastUpdated").textContent = `Last updated: ${formatTimestamp(json.lastUpdated)}`;
+
+    if (!json.rank) {
+      const state = json.status === "offline" ? "offline" : "loading";
+      const message = json.status === "offline" ? "Offline" : "Connecting...";
+      setStatus(message, state);
+      renderMatches(json.matches || []);
+      showAgentIcons = json.showAgentIcons !== false;
+      renderAgentHistory(json.matches || []);
+      return;
     }
 
     rankImageBasePath = json.imagePath || DEFAULT_IMAGE_PATH;
@@ -388,7 +1052,17 @@ async function fetchRank() {
     const rr = Number(json.rank.ranking_in_tier) || 0;
 
     document.getElementById("rank").textContent = tier;
-    document.getElementById("rankImg").src = rankImageBasePath + getRankImage(tier);
+    const rankImgEl = document.getElementById("rankImg");
+    const rankIconUrl = resolveRankIconUrl(json.rank, rankImageBasePath, tier);
+    const remoteFallback = json.rank?.images?.large || json.rank?.images?.small || "";
+    rankImgEl.onerror = () => {
+      if (remoteFallback && rankImgEl.src !== remoteFallback) {
+        rankImgEl.src = remoteFallback;
+        return;
+      }
+      rankImgEl.onerror = null;
+    };
+    rankImgEl.src = rankIconUrl;
 
     if (displayedRR === null) {
       displayedRR = rr;
@@ -397,34 +1071,41 @@ async function fetchRank() {
       animateRR(rr);
     }
 
-    if (lastTier && tier !== lastTier) {
+    if (!lastTier || tier !== lastTier) {
       animateRankIcon();
     }
     lastTier = tier;
 
-    const stats = json.stats || { wins: 0, losses: 0, streak: 0, type: null };
-    const total = stats.wins + stats.losses;
-    const winrate = total ? Math.round((stats.wins / total) * 100) : 0;
-    document.getElementById("winrate").textContent = `${winrate}%`;
-
-    const streakText = stats.streak >= 1
-      ? `${stats.type === "win" ? "🔥" : stats.type === "loss" ? "🥶" : ""} ${stats.streak} ${stats.type?.toUpperCase() || ""}`.trim()
-      : "--";
-    document.getElementById("streak").textContent = streakText;
+    const animationIntervalSeconds = Number(json.rankAnimationIntervalSec);
+    scheduleRankAnimation(Number.isFinite(animationIntervalSeconds) && animationIntervalSeconds > 0
+      ? animationIntervalSeconds * 1000
+      : 15000);
 
     document.getElementById("division").textContent = `${json.player?.name || "Player"}#${json.player?.tag || "0000"}`;
-    document.getElementById("lastUpdated").textContent = `Last updated: ${formatTimestamp(json.lastUpdated)}`;
+    applyIdVisibility(json.showPlayerId !== false);
+    applyStatusVisibility(json.showConnection, json.showLastUpdated);
+    showAgentIcons = json.showAgentIcons !== false;
+    maxMatchResults = clampMatchResults(json.maxMatchResults);
     setStatus(json.status === "online" ? "Live" : "Offline", json.status || "loading");
+    renderAgentHistory(json.matches);
     renderMatches(json.matches);
   } catch (error) {
     setStatus("Disconnected", "offline");
     document.getElementById("lastUpdated").textContent = `Last updated: ${formatTimestamp(null)}`;
+    const statusEl = document.getElementById("saveStatus");
+    if (statusEl) {
+      statusEl.textContent = `Cannot reach server on 127.0.0.1/localhost:3000 (${error.message})`;
+      statusEl.classList.add("error");
+    }
     console.error("Overlay fetch error:", error.message);
   }
 }
 
+applyTheme(DEFAULT_BG_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_BORDER_STYLE, false);
+loadConfig();
 fetchRank();
 setInterval(fetchRank, 5000);
+document.getElementById("saveConfigBtn").addEventListener("click", saveConfig);
 </script>
 </body>
 </html>

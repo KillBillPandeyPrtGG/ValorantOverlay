@@ -1,6 +1,16 @@
 {
   "player": { "name": "YourName", "tag": "0000", "region": "eu" },
   "apiKey": "HDEV-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "pollIntervalMs": 10000,
-  "rankImageBasePath": "file:///C:/path/to/your/rank_png/"
+  "pollIntervalMs": 30000,
+  "rankImageBasePath": "file:///C:/path/to/your/rank_png/",
+  "showPlayerId": false,
+  "rankAnimationIntervalSec": 15,
+  "backgroundColor": "#0c0f1b",
+  "textColor": "#eef2ff",
+  "borderStyle": "solid",
+  "transparentOverlay": false,
+  "showConnection": true,
+  "showLastUpdated": true,
+  "showAgentIcons": true,
+  "maxMatchResults": 10
 }

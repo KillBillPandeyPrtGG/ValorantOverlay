@@ -1,223 +1,113 @@
-# 🎯 Valorant Live Rank Overlay (Tracker-Style)
+# Valorant Live Rank Overlay
 
-A custom OBS overlay that displays your **Valorant rank, RR, match results, streak, winrate, and recent match history** — built using the HenrikDev API.
+Local OBS-ready Valorant overlay powered by the HenrikDev API.
 
-This is a **local, fast, and customizable alternative to Tracker.gg overlays**.
+It shows live rank, RR, match-point history, recent agents, and configurable UI controls from a built-in settings panel.
 
----
+## Features
 
-# 🚀 Features
+- Live rank + RR updates from HenrikDev API
+- Rank icon rendering with fallback handling
+- Animated RR transitions and periodic rank icon animation
+- Match-point history with configurable display size (1-12)
+- Recent agent strip with local icon caching
+- In-overlay config panel for player and UI settings
+- API rate-limit protections with adaptive backoff
+- Cache-control headers to avoid stale OBS/browser content
 
-## 🟢 Core
-- Live Rank (e.g. Ascendant 2)
-- Real-time RR updates
-- Rank icon display
+## Project Structure
 
-## 🔥 Advanced (Tracker-style)
-- Match history (last 5 games → W/L boxes)
-- Accurate winrate (based on matches, not RR guessing)
-- Live streak tracking (🔥 win / 🥶 loss)
+```text
+.
+|- server.js
+|- package.json
+|- config.example.json
+`- overlay/
+   |- index.html
+   `- cache/           (generated runtime files, gitignored)
+```
 
-## ✨ Animations
-- Smooth RR ticking (counts up/down)
-- Rank icon pop + glow on rank change
-- Clean, transparent overlay (OBS-ready)
+## Prerequisites
 
----
+- Node.js 18+
 
-# 🧠 How It Works
+## Setup
 
-Henrik API → Node.js Server → OBS Overlay (HTML)
+1. Install dependencies:
 
-### Backend (`server.js`)
-- Fetches:
-  - Rank data (MMR endpoint)
-  - Match history (matches endpoint)
-  - Match RR delta (mmr-history endpoint)
-- Calculates:
-  - Wins / Losses
-  - Winrate
-  - Current streak
-- Serves data via:
-
-### Configuration
-- Copy `config.example.json` to `config.json`
-- Keep `config.json` private to protect your API key and player settings
-- `config.example.json` is committed so others can bootstrap the project quickly
-
-http://localhost:3000/rank
-
----
-
-### Frontend (`overlay/index.html`)
-- Fetches local API every 5 seconds
-- Displays:
-  - Rank + RR
-  - Match history
-  - Streak + winrate
-- Handles animations (RR ticking, icon effects)
-
----
-
-# 📦 Project Structure
-
-valorant-overlay/
-│
-├── server.js        # Backend (API + logic)
-├── package.json     # Dependencies
-│
-└── overlay/
-    └── index.html  # OBS overlay UI
-
----
-
-# ⚙️ Setup Guide
-
-## 1. Install Node.js
-Download: https://nodejs.org
-
----
-
-## 2. Install dependencies
-
+```bash
 npm install
+```
 
----
+2. Create local config:
 
-## 3. Start server
+```bash
+copy config.example.json config.json
+```
 
+3. Update `config.json`:
+
+- `player.name`
+- `player.tag`
+- `player.region`
+- `apiKey`
+
+4. Start server:
+
+```bash
 node server.js
+```
 
-You should see:
-Server running on http://localhost:3000
+5. Verify API payload:
 
----
+- `http://127.0.0.1:3000/rank`
 
-## 4. Test API
+6. Add overlay in OBS:
 
-Open:
-http://localhost:3000/rank
+- Source type: Browser Source
+- URL: `http://127.0.0.1:3000/`
+- Recommended: enable "Refresh browser when scene becomes active"
 
-You should see JSON data.
+## Configuration
 
----
+Use `config.json` for defaults and `POST /config` (via UI) for runtime updates.
 
-## 5. Add to OBS
+Supported keys:
 
-### Steps:
-1. Open OBS
-2. Add Source → Browser
-3. Enable Local File
-4. Select:
-overlay/index.html
+- `player.name`, `player.tag`, `player.region`
+- `apiKey`
+- `pollIntervalMs` (clamped 10000-300000)
+- `rankImageBasePath`
+- `showPlayerId`
+- `rankAnimationIntervalSec`
+- `backgroundColor`
+- `textColor`
+- `borderStyle`
+- `transparentOverlay`
+- `showConnection`
+- `showLastUpdated`
+- `showAgentIcons`
+- `maxMatchResults` (clamped 1-12)
 
----
+## API Endpoints
 
-### Recommended OBS Settings:
+- `GET /rank` - Current overlay payload
+- `GET /config` - Effective runtime config
+- `POST /config` - Save validated config updates
 
-- Width: 800
-- Height: 300
-- Shutdown when not visible: OFF
-- Refresh when active: ON
+## Operational Notes
 
----
+- Default backend polling is 30 seconds.
+- On `429` responses, polling backs off using `Retry-After` + exponential delay.
+- Agent icons are downloaded once and reused from `overlay/cache/agent-icons`.
+- Static responses are served with no-store headers to reduce stale OBS content.
 
-# 🎨 Customization
+## Troubleshooting
 
-## Rank Images
-Update this path in `config.json` or `overlay/index.html`:
+- If old data remains after changing player details, save settings again and wait one refresh cycle; the server now clears stale cache and fetches new player data immediately.
+- If overlays look outdated in OBS, confirm source URL is `127.0.0.1:3000` and refresh the browser source.
+- If rate limits continue, confirm only one server instance is running.
 
-"rankImageBasePath": "file:///C:/Users/user/Downloads/rank_png/"
+## Changelog
 
-You can also update `player.name`, `player.tag`, and `player.region` in `config.json`.
-
----
-
-## Overlay Position
-
-Edit CSS:
-
-.overlay {
-  top: 40px;
-  left: 40px;
-}
-
----
-
-## Colors
-
-- Win: #4cff9a
-- Loss: #ff5c5c
-
----
-
-# ⚠️ API Notes
-
-- Uses HenrikDev Valorant API
-- API documentation: https://app.swaggerhub.com/apis-docs/Henrik-3/HenrikDev-API/4.2.1
-- Uses `v1/mmr-history` to compute per-match RR deltas
-- Rate limit: ~30 requests/min
-- Current setup:
-  - Backend fetch: every 10s
-  - Frontend fetch: every 5s
-- Recommended install: `npm install`
-
-
----
-
-# ❗ Limitations
-
-- Session resets when server restarts
-- No long-term match history storage
-- No player stats (K/D, HS%) yet
-
----
-
-# 🚀 Future Upgrades (Optional)
-
-- Agent icons per match
-- K/D + Headshot %
-- RR progress bar (0–100)
-- Rank-up sound effects
-- Session tracking (persistent storage)
-
----
-
-# 💡 Why This > Tracker Overlay
-
-- Faster (local API)
-- Fully customizable
-- No external dependency
-- Better animations
-
----
-
-# 🛠 Built For
-
-- Streamers (OBS)
-- Valorant content creators
-- Coaching streams
-- "Unranked to Immortal" series
-
----
-
-# 📌 Credits
-
-- API: HenrikDev Valorant API
-- UI/Logic: Custom implementation
-
----
-
-# 🧠 Tip
-
-If overlay doesn’t update:
-- Check server is running
-- Refresh OBS source
-- Verify API response
-
----
-
-# 🔥 Author Note
-
-This setup is already **80–90% of Tracker.gg overlay quality**,  
-and with small upgrades, it can easily surpass it.
+See `CHANGELOG.md` for versioned release history.
