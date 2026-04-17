@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Valorant Overlay Config</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0b111f;
+    color: #eef2ff;
+  }
+  .config-panel {
+    width: min(520px, calc(100% - 32px));
+    padding: 24px 26px;
+    border-radius: 22px;
+    background: rgba(12, 15, 27, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 64px rgba(0, 0, 0, 0.34);
+  }
+  .config-heading {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 0 16px;
+  }
+  .config-note {
+    margin: 0 0 22px;
+    color: #94a3b8;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .config-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .config-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .config-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: #94a3b8;
+  }
+  .config-input {
+    width: 100%;
+    height: 44px;
+    border: none;
+    border-radius: 14px;
+    padding: 0;
+    cursor: pointer;
+    background: #111827;
+  }
+  .actions {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .save-button {
+    border: none;
+    border-radius: 16px;
+    padding: 12px 18px;
+    background: #4cff9a;
+    color: #08110a;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s ease, background 0.18s ease;
+  }
+  .save-button:hover {
+    transform: translateY(-1px);
+    background: #3cd87f;
+  }
+  .status {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+  .status.success { color: #4cff9a; }
+  .status.error { color: #ff7b7b; }
+  .link-row {
+    margin-top: 24px;
+    text-align: right;
+  }
+  .link-row a {
+    color: #81b8ff;
+    text-decoration: none;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="config-panel">
+  <h1 class="config-heading">Overlay Theme Config</h1>
+  <p class="config-note">Use this page to update the overlay background and text colors. Save the config, then refresh your overlay source.</p>
+  <div class="config-grid">
+    <div class="config-item">
+      <label class="config-label" for="bgColorInput">Background color</label>
+      <input id="bgColorInput" class="config-input" type="color" value="#0c0f1b">
+    </div>
+    <div class="config-item">
+      <label class="config-label" for="textColorInput">Text color</label>
+      <input id="textColorInput" class="config-input" type="color" value="#eef2ff">
+    </div>
+  </div>
+  <div class="actions">
+    <button id="saveConfigBtn" class="save-button" type="button">Save config</button>
+    <div id="saveStatus" class="status">Ready</div>
+  </div>
+  <div class="link-row">
+    <a href="/">Open overlay</a>
+  </div>
+</div>
+<script>
+const CONFIG_URL = "/config";
+const saveBtn = document.getElementById("saveConfigBtn");
+const statusEl = document.getElementById("saveStatus");
+const bgInput = document.getElementById("bgColorInput");
+const textInput = document.getElementById("textColorInput");
+
+function updateStatus(message, type) {
+  statusEl.textContent = message;
+  statusEl.className = type ? `status ${type}` : "status";
+}
+
+function loadConfig() {
+  fetch(CONFIG_URL, { cache: "no-store" })
+    .then(res => res.json())
+    .then(data => {
+      if (data.backgroundColor) bgInput.value = data.backgroundColor;
+      if (data.textColor) textInput.value = data.textColor;
+    })
+    .catch(() => updateStatus("Unable to load current config", "error"));
+}
+
+function saveConfig() {
+  updateStatus("Saving...");
+  fetch(CONFIG_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      backgroundColor: bgInput.value,
+      textColor: textInput.value
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        updateStatus("Saved successfully", "success");
+      } else {
+        updateStatus(data.error || "Save failed", "error");
+      }
+    })
+    .catch(() => updateStatus("Network error", "error"));
+}
+
+saveBtn.addEventListener("click", saveConfig);
+loadConfig();
+</script>
+</body>
+</html>
