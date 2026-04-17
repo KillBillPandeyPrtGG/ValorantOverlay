@@ -1,0 +1,6 @@
+{
+  "player": { "name": "YourName", "tag": "0000", "region": "eu" },
+  "apiKey": "HDEV-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "pollIntervalMs": 10000,
+  "rankImageBasePath": "file:///C:/path/to/your/rank_png/"
+}

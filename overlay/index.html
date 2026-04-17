@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body {
+  margin: 0;
+  background: transparent;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 760px;
+  color: #eef2ff;
+}
+
+.panel {
+  width: 100%;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(12, 15, 27, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+}
+
+.top-row,
+.body-row,
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rank-card,
+.status-card,
+.score-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rank-card {
+  flex: 1 1 320px;
+}
+
+.rank-img {
+  width: 84px;
+  height: 84px;
+  border-radius: 20px;
+  object-fit: cover;
+  transition: transform 0.35s ease, filter 0.35s ease;
+  filter: drop-shadow(0 0 16px rgba(76, 255, 154, 0));
+}
+
+.rank-img.animate {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 18px rgba(76, 255, 154, 0.55));
+}
+
+.rank-info {
+  display: grid;
+  gap: 6px;
+}
+
+.rank-name {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.rank-subtitle {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.status-card {
+  flex: 1 1 200px;
+  justify-content: flex-end;
+}
+
+.status-box {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status-label {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.status {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status.online { color: #4cff9a; }
+.status.offline { color: #ff5c5c; }
+.status.loading { color: #f8cd69; }
+
+.last-updated {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.body-row {
+  margin-top: 16px;
+}
+
+.score-card {
+  flex: 1 1 320px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rr-label {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.rr-value {
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4cff9a 0%, #22c55e 100%);
+  transition: width 0.35s ease;
+}
+
+.stats-grid {
+  flex: 1 1 280px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-name {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.history-row {
+  margin-top: 18px;
+  flex-direction: column;
+}
+
+.section-title {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+
+.history {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.history-item {
+  width: 50px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.history-item.gain { background: #4cff9a; }
+.history-item.loss { background: #ff5c5c; color: #ffffff; }
+.history-item.neutral { background: rgba(148, 163, 184, 0.24); color: #eef2ff; }
+</style>
+</head>
+
+<body>
+<div class="overlay">
+  <div class="panel">
+    <div class="top-row">
+      <div class="rank-card">
+        <img id="rankImg" class="rank-img" src="" alt="Rank icon">
+        <div class="rank-info">
+          <div id="rank" class="rank-name">Loading...</div>
+          <div id="division" class="rank-subtitle">Valorant rank tracker</div>
+        </div>
+      </div>
+      <div class="status-card">
+        <div class="status-box">
+          <div class="status-row">
+            <div class="status-label">Connection</div>
+            <div id="status" class="status loading">Connecting...</div>
+          </div>
+          <div id="lastUpdated" class="last-updated">Last updated: --</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="body-row">
+      <div class="score-card">
+        <div class="rr-label">Rank Rating</div>
+        <div id="rr" class="rr-value">--</div>
+        <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-name">Winrate</div>
+          <div id="winrate" class="stat-value">--</div>
+        </div>
+        <div class="stat">
+          <div class="stat-name">Streak</div>
+          <div id="streak" class="stat-value">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="history-row">
+      <div class="section-title">Recent matches (oldest → newest)</div>
+      <div id="history" class="history"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = "http://localhost:3000/rank";
+const DEFAULT_IMAGE_PATH = "file:///C:/Users/user/Downloads/rank_png/";
+
+let displayedRR = null;
+let targetRR = null;
+let rrAnimationFrame = null;
+let lastTier = null;
+let rankImageBasePath = DEFAULT_IMAGE_PATH;
+
+function getRankImage(tier) {
+  if (!tier) return "";
+  if (tier === "Radiant") return "Radiant_Rank.png";
+  return tier.replace(/\s+/g, "_") + "_Rank.png";
+}
+
+function animateRankIcon() {
+  const img = document.getElementById("rankImg");
+  img.classList.add("animate");
+  setTimeout(() => img.classList.remove("animate"), 360);
+}
+
+function updateProgressBar(rr) {
+  const fill = document.getElementById("progressFill");
+  const value = Math.max(0, Math.min(100, rr));
+  fill.style.width = `${value}%`;
+}
+
+function setStatus(message, state) {
+  const statusEl = document.getElementById("status");
+  statusEl.textContent = message;
+  statusEl.className = `status ${state}`;
+}
+
+function updateRRValue(value, direction = "") {
+  const el = document.getElementById("rr");
+  el.textContent = `RR: ${value}`;
+  el.style.color = direction === "up" ? "#4cff9a" : direction === "down" ? "#ff5c5c" : "#eef2ff";
+  updateProgressBar(value);
+}
+
+function animateRR(newRR) {
+  if (displayedRR === null) {
+    displayedRR = newRR;
+    updateRRValue(newRR);
+    return;
+  }
+
+  targetRR = newRR;
+  if (rrAnimationFrame) return;
+
+  function tick() {
+    if (displayedRR === targetRR) {
+      rrAnimationFrame = null;
+      return;
+    }
+
+    const diff = targetRR - displayedRR;
+    const step = Math.sign(diff) * Math.max(1, Math.min(4, Math.ceil(Math.abs(diff) / 10)));
+    displayedRR += step;
+    const direction = step > 0 ? "up" : "down";
+    updateRRValue(displayedRR, direction);
+    rrAnimationFrame = requestAnimationFrame(tick);
+  }
+
+  tick();
+}
+
+function formatTimestamp(timestamp) {
+  if (!timestamp) return "--";
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function renderMatches(matches) {
+  const historyEl = document.getElementById("history");
+  historyEl.innerHTML = "";
+  if (!Array.isArray(matches) || matches.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "history-item loss";
+    empty.textContent = "--";
+    historyEl.appendChild(empty);
+    return;
+  }
+
+  const displayMatches = [...matches].reverse();
+  displayMatches.forEach(entry => {
+    const points = typeof entry.points === "number" ? entry.points : null;
+    const text = points === null
+      ? entry.result
+      : `${points > 0 ? "+" : ""}${points}`;
+    const state = points === null
+      ? entry.result === "W" ? "gain" : "loss"
+      : points > 0 ? "gain" : points < 0 ? "loss" : "neutral";
+
+    const item = document.createElement("div");
+    item.className = `history-item ${state}`;
+    item.textContent = text;
+    item.title = points === null
+      ? `${entry.result === "W" ? "Win" : "Loss"}`
+      : `${entry.result === "W" ? "Win" : "Loss"} ${text}`;
+    historyEl.appendChild(item);
+  });
+}
+
+async function fetchRank() {
+  try {
+    const res = await fetch(API_URL, { cache: "no-store" });
+    const json = await res.json();
+
+    if (!json || !json.rank) {
+      throw new Error("Invalid overlay data");
+    }
+
+    rankImageBasePath = json.imagePath || DEFAULT_IMAGE_PATH;
+    const tier = json.rank.currenttierpatched || "Unknown";
+    const rr = Number(json.rank.ranking_in_tier) || 0;
+
+    document.getElementById("rank").textContent = tier;
+    document.getElementById("rankImg").src = rankImageBasePath + getRankImage(tier);
+
+    if (displayedRR === null) {
+      displayedRR = rr;
+      updateRRValue(rr);
+    } else {
+      animateRR(rr);
+    }
+
+    if (lastTier && tier !== lastTier) {
+      animateRankIcon();
+    }
+    lastTier = tier;
+
+    const stats = json.stats || { wins: 0, losses: 0, streak: 0, type: null };
+    const total = stats.wins + stats.losses;
+    const winrate = total ? Math.round((stats.wins / total) * 100) : 0;
+    document.getElementById("winrate").textContent = `${winrate}%`;
+
+    const streakText = stats.streak >= 1
+      ? `${stats.type === "win" ? "🔥" : stats.type === "loss" ? "🥶" : ""} ${stats.streak} ${stats.type?.toUpperCase() || ""}`.trim()
+      : "--";
+    document.getElementById("streak").textContent = streakText;
+
+    document.getElementById("division").textContent = `${json.player?.name || "Player"}#${json.player?.tag || "0000"}`;
+    document.getElementById("lastUpdated").textContent = `Last updated: ${formatTimestamp(json.lastUpdated)}`;
+    setStatus(json.status === "online" ? "Live" : "Offline", json.status || "loading");
+    renderMatches(json.matches);
+  } catch (error) {
+    setStatus("Disconnected", "offline");
+    document.getElementById("lastUpdated").textContent = `Last updated: ${formatTimestamp(null)}`;
+    console.error("Overlay fetch error:", error.message);
+  }
+}
+
+fetchRank();
+setInterval(fetchRank, 5000);
+</script>
+</body>
+</html>
