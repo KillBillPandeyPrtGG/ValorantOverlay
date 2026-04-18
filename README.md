@@ -10,6 +10,9 @@ It shows live rank, RR, match-point history, recent agents, and configurable UI 
 - Rank icon rendering with fallback handling
 - Animated RR transitions and periodic rank icon animation
 - Match-point history with configurable display size (1-12)
+- Configurable daily reset window via `trackingDayResetTime`
+- Competitive-only daily history and recent agent strip
+- Empty-state aware history/agent rows (hidden when no daily competitive matches exist)
 - Recent agent strip with local icon caching
 - In-overlay config panel for player and UI settings
 - API rate-limit protections with adaptive backoff
@@ -77,6 +80,7 @@ Supported keys:
 - `player.name`, `player.tag`, `player.region`
 - `apiKey`
 - `pollIntervalMs` (clamped 10000-300000)
+- `trackingDayResetTime` (`HH:MM` in 24h, local server time; default `00:00`)
 - `rankImageBasePath`
 - `showPlayerId`
 - `rankAnimationIntervalSec`
@@ -88,6 +92,13 @@ Supported keys:
 - `showLastUpdated`
 - `showAgentIcons`
 - `maxMatchResults` (clamped 1-12)
+
+### Day Reset Behavior
+
+- Match tracking is now calculated from `trackingDayResetTime` instead of strict midnight.
+- Example: set `trackingDayResetTime` to `04:00` to treat matches played between `00:00` and `03:59` as part of the previous day session.
+- Daily match history and agent icons only include competitive matches in the active reset window.
+- When there are no daily competitive matches, history and agent icon rows are hidden.
 
 ## API Endpoints
 
@@ -101,6 +112,7 @@ Supported keys:
 - On `429` responses, polling backs off using `Retry-After` + exponential delay.
 - Agent icons are downloaded once and reused from `overlay/cache/agent-icons`.
 - Static responses are served with no-store headers to reduce stale OBS content.
+- Overlay text and rank image include subtle shadows to improve readability over bright or busy scenes.
 
 ## Troubleshooting
 

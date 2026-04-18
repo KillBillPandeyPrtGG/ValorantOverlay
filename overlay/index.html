@@ -73,22 +73,22 @@ body {
   border-radius: 20px;
   object-fit: cover;
   transition: transform 0.35s ease, filter 0.35s ease;
-  filter: drop-shadow(0 0 16px rgba(76, 255, 154, 0));
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 16px rgba(76, 255, 154, 0));
 }
 
 .rank-img.animate {
   transform: scale(1.12);
-  filter: drop-shadow(0 0 22px rgba(76, 255, 154, 0.8));
+  filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 22px rgba(76, 255, 154, 0.8));
   animation: rank-glimmer 0.9s ease, rank-flip 0.9s ease;
 }
 
 @keyframes rank-glimmer {
   0%, 100% {
-    filter: drop-shadow(0 0 18px rgba(76, 255, 154, 0.4));
+    filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.4)) drop-shadow(0 0 18px rgba(76, 255, 154, 0.4));
     box-shadow: 0 0 0 rgba(76, 255, 154, 0);
   }
   50% {
-    filter: drop-shadow(0 0 28px rgba(76, 255, 154, 1));
+    filter: drop-shadow(0 3px 14px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 28px rgba(76, 255, 154, 1));
     box-shadow: 0 0 32px rgba(76, 255, 154, 0.35);
   }
 }
@@ -180,6 +180,17 @@ body {
   color: #94a3b8;
   white-space: nowrap;
   opacity: 0.9;
+}
+
+.rank-name,
+.rr-value,
+.rank-separator,
+.rank-subtitle,
+.rr-label,
+.status,
+.status-label,
+.last-updated {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .top-row {
@@ -582,6 +593,10 @@ body {
         <label for="maxMatchResultsInput">Max games shown (1-12)</label>
         <input id="maxMatchResultsInput" class="config-input" type="number" min="1" max="12" step="1" value="10">
       </div>
+      <div class="config-item">
+        <label for="trackingDayResetTimeInput">Day reset time (24h)</label>
+        <input id="trackingDayResetTimeInput" class="config-input" type="time" step="60" value="00:00">
+      </div>
     </div>
   </div>
   <div class="config-actions">
@@ -597,6 +612,7 @@ const DEFAULT_IMAGE_PATH = "file:///C:/Users/user/Downloads/rank_png/";
 const DEFAULT_BG_COLOR = "#0c0f1b";
 const DEFAULT_TEXT_COLOR = "#eef2ff";
 const DEFAULT_BORDER_STYLE = "solid";
+const DEFAULT_TRACKING_RESET_TIME = "00:00";
 
 let displayedRR = null;
 let targetRR = null;
@@ -738,7 +754,19 @@ function clampMatchResults(value) {
   return Math.max(1, Math.min(12, Math.floor(parsed)));
 }
 
-function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOverlay, showConnection, showLastUpdated, showAgentIconsValue, configuredMaxMatchResults, player) {
+function normalizeTrackingResetTime(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  const match = /^(\d{1,2}):(\d{2})$/.exec(trimmed);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return null;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOverlay, showConnection, showLastUpdated, showAgentIconsValue, configuredMaxMatchResults, trackingDayResetTime, player) {
   const bgInput = document.getElementById("bgColorInput");
   const textInput = document.getElementById("textColorInput");
   const borderInput = document.getElementById("borderStyleInput");
@@ -747,6 +775,7 @@ function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOve
   const showLastUpdatedInput = document.getElementById("showLastUpdatedInput");
   const showAgentIconsInput = document.getElementById("showAgentIconsInput");
   const maxMatchResultsInput = document.getElementById("maxMatchResultsInput");
+  const trackingDayResetTimeInput = document.getElementById("trackingDayResetTimeInput");
   const playerNameInput = document.getElementById("playerNameInput");
   const playerTagInput = document.getElementById("playerTagInput");
   const playerRegionInput = document.getElementById("playerRegionInput");
@@ -760,6 +789,9 @@ function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOve
   showAgentIcons = showAgentIconsValue !== false;
   maxMatchResults = clampMatchResults(configuredMaxMatchResults);
   if (maxMatchResultsInput) maxMatchResultsInput.value = String(maxMatchResults);
+  if (trackingDayResetTimeInput) {
+    trackingDayResetTimeInput.value = normalizeTrackingResetTime(trackingDayResetTime) || DEFAULT_TRACKING_RESET_TIME;
+  }
   if (playerNameInput) playerNameInput.value = player?.name || "";
   if (playerTagInput) playerTagInput.value = player?.tag || "";
   if (playerRegionInput) playerRegionInput.value = player?.region || "ap";
@@ -805,6 +837,7 @@ function loadConfig() {
         data.showLastUpdated,
         data.showAgentIcons,
         data.maxMatchResults,
+        data.trackingDayResetTime,
         data.player
       );
       applyTheme(data.backgroundColor, data.textColor, data.borderStyle, data.transparentOverlay);
@@ -834,6 +867,7 @@ function saveConfig() {
   const showLastUpdated = document.getElementById("showLastUpdatedInput").checked;
   const showAgentIconsValue = document.getElementById("showAgentIconsInput").checked;
   const maxMatchResultsValue = clampMatchResults(document.getElementById("maxMatchResultsInput").value);
+  const trackingDayResetTimeValue = normalizeTrackingResetTime(document.getElementById("trackingDayResetTimeInput")?.value || "");
   const playerName = document.getElementById("playerNameInput").value.trim();
   const playerTag = document.getElementById("playerTagInput").value.trim();
   const playerRegion = document.getElementById("playerRegionInput").value;
@@ -845,6 +879,12 @@ function saveConfig() {
 
   if (!playerName || !playerTag || !playerRegion) {
     statusEl.textContent = "Player name, tag, and region are required";
+    statusEl.classList.add("error");
+    return;
+  }
+
+  if (!trackingDayResetTimeValue) {
+    statusEl.textContent = "Day reset time must be HH:MM (24h)";
     statusEl.classList.add("error");
     return;
   }
@@ -861,6 +901,7 @@ function saveConfig() {
       showLastUpdated,
       showAgentIcons: showAgentIconsValue,
       maxMatchResults: maxMatchResultsValue,
+      trackingDayResetTime: trackingDayResetTimeValue,
       player: { name: playerName, tag: playerTag, region: playerRegion }
     })
   })
@@ -952,14 +993,15 @@ function applyIdVisibility(show) {
 
 function renderMatches(matches) {
   const historyEl = document.getElementById("history");
+  const historyRowEl = historyEl ? historyEl.closest(".history-row") : null;
+  if (!historyEl) return;
   historyEl.innerHTML = "";
   if (!Array.isArray(matches) || matches.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "history-item loss";
-    empty.textContent = "--";
-    historyEl.appendChild(empty);
+    if (historyRowEl) historyRowEl.style.display = "none";
     return;
   }
+
+  if (historyRowEl) historyRowEl.style.display = "";
 
   const displayMatches = [...matches].slice(0, maxMatchResults).reverse();
   displayMatches.forEach(entry => {
@@ -992,18 +1034,13 @@ function renderAgentHistory(matches) {
   if (!rowEl || !historyEl) return;
 
   historyEl.innerHTML = "";
-  rowEl.style.display = showAgentIcons ? "" : "none";
-  if (!showAgentIcons) return;
-
   const entries = Array.isArray(matches) ? matches.slice(0, LAST_AGENT_COUNT) : [];
-  if (entries.length === 0) {
-    for (let i = 0; i < LAST_AGENT_COUNT; i++) {
-      const item = document.createElement("div");
-      item.className = "agent-item";
-      historyEl.appendChild(item);
-    }
+  if (!showAgentIcons || entries.length === 0) {
+    rowEl.style.display = "none";
     return;
   }
+
+  rowEl.style.display = "";
 
   entries.forEach((entry) => {
     const item = document.createElement("div");

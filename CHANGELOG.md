@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## [1.2.0] - 2026-04-18
+
+### Added
+- Added `trackingDayResetTime` config support (`HH:MM`, 24-hour local server time) to define when daily match tracking resets.
+- Added day-reset control in the in-overlay settings panel for runtime updates through `POST /config`.
+
+### Changed
+- Changed daily match aggregation to honor configured reset windows rather than strict midnight.
+- Changed match history and agent-strip sources to competitive matches only.
+- Changed point resolution to map MMR deltas by `match_id`, improving correctness when mixed match modes are present.
+- Updated overlay visuals with light text/image shadows for better readability on complex OBS backgrounds.
+
+### Fixed
+- Fixed stale previous-day history showing in the next day when a custom reset time is configured.
+- Fixed empty-day UI behavior by hiding history and agent rows instead of rendering placeholder `--` and empty icon slots.
+
+### Operational
+- Runtime normalization now auto-persistently backfills `trackingDayResetTime` in older `config.json` files.
+
 ## [1.1.0] - 2026-04-17
 
 ### Added

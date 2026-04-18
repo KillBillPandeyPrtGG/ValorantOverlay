@@ -21,6 +21,7 @@ const defaultConfig = {
   player: { name: "CalmAimer", tag: "3973", region: "ap" },
   apiKey: "HDEV-632cdd82-0292-44de-be24-2ca1315cf52c",
   pollIntervalMs: 30000,
+  trackingDayResetTime: "00:00",
   rankImageBasePath: "file:///C:/Users/user/Downloads/rank_png/",
   showPlayerId: false,
   rankAnimationIntervalSec: 15,
@@ -67,6 +68,11 @@ try {
   }
   if (typeof config.showAgentIcons !== "boolean") {
     config.showAgentIcons = true;
+    normalized = true;
+  }
+  const normalizedTrackingDayResetTime = parseTrackingDayResetTime(config.trackingDayResetTime);
+  if (config.trackingDayResetTime !== normalizedTrackingDayResetTime) {
+    config.trackingDayResetTime = normalizedTrackingDayResetTime;
     normalized = true;
   }
   const normalizedPoll = getConfiguredPollIntervalMs();
@@ -119,6 +125,65 @@ function parseRetryAfterMs(response) {
   }
 
   return fallbackMs;
+}
+
+function parseTrackingDayResetTime(value) {
+  const fallback = defaultConfig.trackingDayResetTime;
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  const match = /^(\d{1,2}):(\d{2})$/.exec(trimmed);
+  if (!match) return fallback;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return fallback;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return fallback;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+}
+
+function getTrackingWindowStart(now, trackingDayResetTime) {
+  const [hoursRaw, minutesRaw] = parseTrackingDayResetTime(trackingDayResetTime).split(":");
+  const hours = Number(hoursRaw);
+  const minutes = Number(minutesRaw);
+
+  const start = new Date(now);
+  start.setSeconds(0, 0);
+  start.setHours(hours, minutes, 0, 0);
+
+  if (now < start) {
+    start.setDate(start.getDate() - 1);
+  }
+
+  return start;
+}
+
+function getMatchTimestamp(match) {
+  const metadata = match?.metadata || {};
+  const candidates = [
+    metadata.game_start,
+    metadata.started_at,
+    metadata.game_start_patched,
+    match?.started_at
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      const ms = candidate > 1e12 ? candidate : candidate * 1000;
+      const parsed = new Date(ms);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    if (typeof candidate === "string" && candidate.trim()) {
+      const parsed = new Date(candidate);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+  }
+
+  return null;
 }
 
 async function fetchJsonOrThrow(url) {
@@ -198,7 +263,8 @@ let cache = {
   textColor: config.textColor,
   borderStyle: config.borderStyle,
   transparentOverlay: config.transparentOverlay === true,
-  showAgentIcons: config.showAgentIcons !== false
+  showAgentIcons: config.showAgentIcons !== false,
+  trackingDayResetTime: parseTrackingDayResetTime(config.trackingDayResetTime)
 };
 
 app.use((req, res, next) => {
@@ -287,6 +353,7 @@ app.get("/config", (req, res) => {
     showConnection: config.showConnection !== false,
     showAgentIcons: config.showAgentIcons !== false,
     showLastUpdated: config.showLastUpdated !== false,
+    trackingDayResetTime: parseTrackingDayResetTime(config.trackingDayResetTime),
     maxMatchResults: Math.max(1, Math.min(12, Math.floor(Number(config.maxMatchResults) || 10)))
   });
 });
@@ -345,6 +412,13 @@ app.post("/config", (req, res) => {
     updates.showAgentIcons = showAgentIcons;
   }
 
+  if (typeof req.body.trackingDayResetTime === "string") {
+    const normalizedTrackingDayResetTime = parseTrackingDayResetTime(req.body.trackingDayResetTime);
+    if (normalizedTrackingDayResetTime === req.body.trackingDayResetTime.trim()) {
+      updates.trackingDayResetTime = normalizedTrackingDayResetTime;
+    }
+  }
+
   const parsedMaxMatchResults = Number(req.body.maxMatchResults);
   if (Number.isFinite(parsedMaxMatchResults)) {
     updates.maxMatchResults = Math.max(1, Math.min(12, Math.floor(parsedMaxMatchResults)));
@@ -399,6 +473,7 @@ app.post("/config", (req, res) => {
     cache.showConnection = config.showConnection !== false;
     cache.showAgentIcons = config.showAgentIcons !== false;
     cache.showLastUpdated = config.showLastUpdated !== false;
+    cache.trackingDayResetTime = parseTrackingDayResetTime(config.trackingDayResetTime);
     cache.maxMatchResults = Math.max(1, Math.min(12, Math.floor(Number(config.maxMatchResults) || 10)));
     cache.player = config.player;
 
@@ -426,6 +501,7 @@ app.post("/config", (req, res) => {
       showConnection: cache.showConnection,
       showAgentIcons: cache.showAgentIcons,
       showLastUpdated: cache.showLastUpdated,
+      trackingDayResetTime: cache.trackingDayResetTime,
       maxMatchResults: cache.maxMatchResults,
       player: cache.player,
       playerChanged
@@ -452,6 +528,11 @@ async function fetchData() {
       `${API_BASE}/v1/mmr-history/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}?api_key=${config.apiKey}`
     );
     const mmrHistoryData = Array.isArray(mmrHistoryJson.data) ? mmrHistoryJson.data : [];
+    const mmrByMatchId = new Map(
+      mmrHistoryData
+        .filter((entry) => entry && typeof entry.match_id === "string")
+        .map((entry) => [entry.match_id, entry.mmr_change_to_last_game])
+    );
 
     const matchData = Array.isArray(matchJson.data) ? matchJson.data : null;
     const matchErrorMessage = Array.isArray(matchJson?.errors) && matchJson.errors[0]?.message
@@ -475,7 +556,19 @@ async function fetchData() {
         .map(item => [item.matchId, item.points])
     );
 
-    const matchesToProcess = hasMatchData ? matchData : [];
+    const trackingWindowStart = getTrackingWindowStart(new Date(), config.trackingDayResetTime);
+    const matchesToProcess = hasMatchData
+      ? matchData.filter((match) => {
+          const modeId = String(match?.metadata?.mode_id || "").toLowerCase();
+          const modeName = String(match?.metadata?.mode || "").toLowerCase();
+          const isCompetitive = modeId === "competitive" || modeName === "competitive";
+          if (!isCompetitive) return false;
+
+          const matchTime = getMatchTimestamp(match);
+          if (!matchTime) return true;
+          return matchTime >= trackingWindowStart;
+        })
+      : [];
 
     for (let index = 0; index < matchesToProcess.length; index++) {
       const match = matchesToProcess[index];
@@ -488,7 +581,7 @@ async function fetchData() {
 
       const winningTeam = match.teams.red.has_won ? "Red" : "Blue";
       const isWin = player.team === winningTeam;
-      const historyChange = mmrHistoryData[index]?.mmr_change_to_last_game;
+      const historyChange = matchId ? mmrByMatchId.get(matchId) : undefined;
       let mmrChange = typeof historyChange === "number" ? historyChange : null;
 
       if (mmrChange === null && matchId && previousPointsByMatchId.has(matchId)) {
@@ -523,11 +616,11 @@ async function fetchData() {
       }
     }
 
-    const nextMatches = results.length > 0
+    const nextMatches = hasMatchData
       ? results
       : (Array.isArray(cache.matches) ? cache.matches : []);
 
-    const nextStats = results.length > 0
+    const nextStats = hasMatchData
       ? { wins, losses, streak, type }
       : (cache.stats || { wins: 0, losses: 0, streak: 0, type: null });
 
@@ -553,6 +646,7 @@ async function fetchData() {
       showConnection: config.showConnection !== false,
       showAgentIcons: config.showAgentIcons !== false,
       showLastUpdated: config.showLastUpdated !== false,
+      trackingDayResetTime: parseTrackingDayResetTime(config.trackingDayResetTime),
       maxMatchResults: Math.max(1, Math.min(12, Math.floor(Number(config.maxMatchResults) || 10)))
     };
     rateLimitedUntil = 0;
