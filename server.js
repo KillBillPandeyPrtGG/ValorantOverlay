@@ -22,7 +22,7 @@ const defaultConfig = {
   apiKey: "HDEV-632cdd82-0292-44de-be24-2ca1315cf52c",
   pollIntervalMs: 30000,
   trackingDayResetTime: "00:00",
-  rankImageBasePath: "file:///C:/Users/user/Downloads/rank_png/",
+  rankImageBasePath: "/assets/rank-images/",
   showPlayerId: false,
   rankAnimationIntervalSec: 15,
   backgroundColor: "#0c0f1b",

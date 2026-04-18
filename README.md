@@ -27,6 +27,8 @@ It shows live rank, RR, match-point history, recent agents, and configurable UI 
 |- config.example.json
 `- overlay/
    |- index.html
+   |- assets/
+   |  `- rank-images/
    `- cache/           (generated runtime files, gitignored)
 ```
 
@@ -92,6 +94,8 @@ Supported keys:
 - `showLastUpdated`
 - `showAgentIcons`
 - `maxMatchResults` (clamped 1-12)
+
+Default `rankImageBasePath` is `/assets/rank-images/` and points to bundled rank images tracked in this repository.
 
 ### Day Reset Behavior
 

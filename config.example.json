@@ -3,7 +3,7 @@
   "apiKey": "HDEV-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "pollIntervalMs": 30000,
   "trackingDayResetTime": "00:00",
-  "rankImageBasePath": "file:///C:/path/to/your/rank_png/",
+  "rankImageBasePath": "/assets/rank-images/",
   "showPlayerId": false,
   "rankAnimationIntervalSec": 15,
   "backgroundColor": "#0c0f1b",

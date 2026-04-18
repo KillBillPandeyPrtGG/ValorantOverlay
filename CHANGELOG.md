@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## [1.2.1] - 2026-04-18
+
+### Added
+- Added bundled rank badge PNG assets under `overlay/assets/rank-images` so the overlay works without external rank image folders.
+
+### Changed
+- Updated default `rankImageBasePath` references in server and overlay UI to `/assets/rank-images/`.
+- Updated documentation and project structure references for the new in-repo rank image asset path.
+
 ## [1.2.0] - 2026-04-18
 
 ### Added
