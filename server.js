@@ -37,7 +37,7 @@ const defaultConfig = {
   overlayBackgroundTheme: "solid",
   glassBlurPx: 14,
   glassTintColor: "#ffffff",
-  glassTintOpacity: 0.12,
+  glassTintOpacity: 0.18,
   glassBorderOpacity: 0.34,
   glassShadowStrength: 0.42,
   transparentOverlay: false,
@@ -125,7 +125,7 @@ try {
     config.glassTintColor = normalizedGlassTintColor;
     normalized = true;
   }
-  const normalizedGlassTintOpacity = Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity));
+  const normalizedGlassTintOpacity = Math.max(0.05, Math.min(0.75, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity));
   if (config.glassTintOpacity !== normalizedGlassTintOpacity) {
     config.glassTintOpacity = normalizedGlassTintOpacity;
     normalized = true;
@@ -286,7 +286,7 @@ let cache = {
   overlayBackgroundTheme: parseOverlayBackgroundTheme(config.overlayBackgroundTheme),
   glassBlurPx: Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx))),
   glassTintColor: isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor,
-  glassTintOpacity: Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
+  glassTintOpacity: Math.max(0.05, Math.min(0.75, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
   glassBorderOpacity: Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity)),
   glassShadowStrength: Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength)),
   transparentOverlay: config.transparentOverlay === true,
@@ -379,7 +379,7 @@ app.get("/config", (req, res) => {
     overlayBackgroundTheme: parseOverlayBackgroundTheme(config.overlayBackgroundTheme),
     glassBlurPx: Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx))),
     glassTintColor: isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor,
-    glassTintOpacity: Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
+    glassTintOpacity: Math.max(0.05, Math.min(0.75, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
     glassBorderOpacity: Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity)),
     glassShadowStrength: Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength)),
     transparentOverlay: config.transparentOverlay === true,
@@ -422,7 +422,7 @@ app.post("/config", (req, res) => {
   }
   const parsedGlassTintOpacity = Number(req.body.glassTintOpacity);
   if (Number.isFinite(parsedGlassTintOpacity)) {
-    updates.glassTintOpacity = Math.max(0.05, Math.min(0.35, parsedGlassTintOpacity));
+    updates.glassTintOpacity = Math.max(0.05, Math.min(0.75, parsedGlassTintOpacity));
   }
   const parsedGlassBorderOpacity = Number(req.body.glassBorderOpacity);
   if (Number.isFinite(parsedGlassBorderOpacity)) {
@@ -539,7 +539,7 @@ app.post("/config", (req, res) => {
     cache.overlayBackgroundTheme = parseOverlayBackgroundTheme(config.overlayBackgroundTheme);
     cache.glassBlurPx = Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx)));
     cache.glassTintColor = isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor;
-    cache.glassTintOpacity = Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity));
+    cache.glassTintOpacity = Math.max(0.05, Math.min(0.75, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity));
     cache.glassBorderOpacity = Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity));
     cache.glassShadowStrength = Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength));
     cache.transparentOverlay = config.transparentOverlay === true;
@@ -738,7 +738,7 @@ async function fetchData() {
       overlayBackgroundTheme: parseOverlayBackgroundTheme(config.overlayBackgroundTheme),
       glassBlurPx: Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx))),
       glassTintColor: isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor,
-      glassTintOpacity: Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
+      glassTintOpacity: Math.max(0.05, Math.min(0.75, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
       glassBorderOpacity: Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity)),
       glassShadowStrength: Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength)),
       transparentOverlay: config.transparentOverlay === true,

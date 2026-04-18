@@ -11,7 +11,7 @@
     align-items: center;
     justify-content: center;
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #0b111f;
+    background: transparent;
     color: #eef2ff;
   }
   .config-panel {
@@ -57,6 +57,21 @@
     padding: 0;
     cursor: pointer;
     background: #111827;
+  }
+  .config-input[type="range"] {
+    cursor: pointer;
+    padding: 0 10px;
+  }
+  .config-range-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .config-range-value {
+    font-size: 12px;
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
   }
   .actions {
     margin-top: 22px;
@@ -109,6 +124,13 @@
       <label class="config-label" for="textColorInput">Text color</label>
       <input id="textColorInput" class="config-input" type="color" value="#eef2ff">
     </div>
+    <div class="config-item" style="grid-column: 1 / -1;">
+      <div class="config-range-row">
+        <label class="config-label" for="glassTintOpacityInput">Glass opacity</label>
+        <span id="glassTintOpacityValue" class="config-range-value">--</span>
+      </div>
+      <input id="glassTintOpacityInput" class="config-input" type="range" min="0.05" max="0.75" step="0.01" value="0.18">
+    </div>
   </div>
   <div class="actions">
     <button id="saveConfigBtn" class="save-button" type="button">Save config</button>
@@ -124,6 +146,14 @@ const saveBtn = document.getElementById("saveConfigBtn");
 const statusEl = document.getElementById("saveStatus");
 const bgInput = document.getElementById("bgColorInput");
 const textInput = document.getElementById("textColorInput");
+const glassOpacityInput = document.getElementById("glassTintOpacityInput");
+const glassOpacityValue = document.getElementById("glassTintOpacityValue");
+
+function updateGlassOpacityLabel() {
+  if (!glassOpacityInput || !glassOpacityValue) return;
+  const value = Number(glassOpacityInput.value);
+  glassOpacityValue.textContent = Number.isFinite(value) ? value.toFixed(2) : "--";
+}
 
 function updateStatus(message, type) {
   statusEl.textContent = message;
@@ -136,6 +166,10 @@ function loadConfig() {
     .then(data => {
       if (data.backgroundColor) bgInput.value = data.backgroundColor;
       if (data.textColor) textInput.value = data.textColor;
+      if (glassOpacityInput && typeof data.glassTintOpacity === "number") {
+        glassOpacityInput.value = String(data.glassTintOpacity);
+      }
+      updateGlassOpacityLabel();
     })
     .catch(() => updateStatus("Unable to load current config", "error"));
 }
@@ -147,7 +181,8 @@ function saveConfig() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       backgroundColor: bgInput.value,
-      textColor: textInput.value
+      textColor: textInput.value,
+      glassTintOpacity: glassOpacityInput ? Number(glassOpacityInput.value) : undefined
     })
   })
     .then(res => res.json())
@@ -162,6 +197,9 @@ function saveConfig() {
 }
 
 saveBtn.addEventListener("click", saveConfig);
+if (glassOpacityInput) {
+  glassOpacityInput.addEventListener("input", updateGlassOpacityLabel);
+}
 loadConfig();
 </script>
 </body>
