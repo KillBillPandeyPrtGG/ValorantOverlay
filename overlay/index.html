@@ -518,6 +518,66 @@ body.overlay-only.overlay-only-force-transparent-panel .panel {
   flex: 0 1 156px;
 }
 
+.api-key-config-item {
+  flex: 1 1 100%;
+  min-width: 100%;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.api-key-config-item label {
+  flex: 0 0 138px;
+  white-space: nowrap;
+}
+
+.api-key-config-item .config-input {
+  max-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.api-key-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.api-key-visibility-btn {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.95);
+  color: #dbeafe;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.api-key-visibility-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.api-key-visibility-btn .eye-off-mark {
+  display: none;
+}
+
+.api-key-visibility-btn.is-visible .eye-off-mark {
+  display: inline;
+}
+
 #overlayBackgroundThemeInput {
   max-width: 190px;
   flex-basis: 190px;
@@ -825,6 +885,19 @@ body.overlay-only.overlay-only-force-transparent-panel .panel {
           <option value="br">BR</option>
         </select>
       </div>
+      <div class="config-item api-key-config-item">
+        <label for="apiKeyInput">HenrikDev API key</label>
+        <div class="api-key-inline-actions">
+          <input id="apiKeyInput" class="config-input" type="password" placeholder="Enter HDEV-..." autocomplete="off" spellcheck="false">
+          <button id="apiKeyVisibilityBtn" class="api-key-visibility-btn" type="button" aria-label="Show API key" title="Show API key">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M2 12s3.5-6 10-6s10 6 10 6s-3.5 6-10 6s-10-6-10-6"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+              <line class="eye-off-mark" x1="4" y1="20" x2="20" y2="4"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -959,6 +1032,7 @@ let currentGlassSettings = {
   borderOpacity: DEFAULT_GLASS_BORDER_OPACITY,
   shadowStrength: DEFAULT_GLASS_SHADOW_STRENGTH
 };
+let hasConfiguredApiKey = false;
 const LAST_AGENT_COUNT = 10;
 
 function isOverlayOnlyMode() {
@@ -1360,7 +1434,32 @@ function populateTrackingResetTimeOptions(selectedTime) {
   select.value = normalizedSelected;
 }
 
-function setConfigInputs(backgroundColor, textColor, borderStyle, overlayBackgroundTheme, transparentOverlay, glassBlurPx, glassTintColor, glassTintOpacity, glassBorderOpacity, glassShadowStrength, showConnection, showLastUpdated, showAgentIconsValue, configuredMaxMatchResults, trackingDayResetTime, player) {
+function setApiKeyFieldMaskState(masked) {
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  if (!apiKeyInput) return;
+
+  apiKeyInput.dataset.masked = masked ? "true" : "false";
+  if (masked) {
+    apiKeyInput.value = "********";
+    apiKeyInput.placeholder = "";
+  } else {
+    apiKeyInput.value = "";
+    apiKeyInput.placeholder = "Enter HDEV-...";
+  }
+}
+
+function setApiKeyVisibility(visible) {
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const visibilityBtn = document.getElementById("apiKeyVisibilityBtn");
+  if (!apiKeyInput || !visibilityBtn) return;
+
+  apiKeyInput.type = visible ? "text" : "password";
+  visibilityBtn.classList.toggle("is-visible", visible);
+  visibilityBtn.setAttribute("aria-label", visible ? "Hide API key" : "Show API key");
+  visibilityBtn.setAttribute("title", visible ? "Hide API key" : "Show API key");
+}
+
+function setConfigInputs(backgroundColor, textColor, borderStyle, overlayBackgroundTheme, transparentOverlay, glassBlurPx, glassTintColor, glassTintOpacity, glassBorderOpacity, glassShadowStrength, showConnection, showLastUpdated, showAgentIconsValue, configuredMaxMatchResults, trackingDayResetTime, player, hasApiKey) {
   const bgInput = document.getElementById("bgColorInput");
   const textInput = document.getElementById("textColorInput");
   const overlayBackgroundThemeInput = document.getElementById("overlayBackgroundThemeInput");
@@ -1414,6 +1513,9 @@ function setConfigInputs(backgroundColor, textColor, borderStyle, overlayBackgro
   if (playerNameInput) playerNameInput.value = player?.name || "";
   if (playerTagInput) playerTagInput.value = player?.tag || "";
   if (playerRegionInput) playerRegionInput.value = player?.region || "ap";
+  hasConfiguredApiKey = Boolean(hasApiKey);
+  setApiKeyFieldMaskState(hasConfiguredApiKey);
+  setApiKeyVisibility(false);
   syncConfigPanelLayout();
 }
 
@@ -1464,7 +1566,8 @@ function loadConfig() {
         data.showAgentIcons,
         data.maxMatchResults,
         data.trackingDayResetTime,
-        data.player
+        data.player,
+        data.hasApiKey
       );
       applyTheme(data.backgroundColor, data.textColor, data.borderStyle, data.overlayBackgroundTheme, data.transparentOverlay, {
         glassBlurPx: data.glassBlurPx,
@@ -1509,6 +1612,9 @@ function saveConfig() {
   const playerName = document.getElementById("playerNameInput").value.trim();
   const playerTag = document.getElementById("playerTagInput").value.trim();
   const playerRegion = document.getElementById("playerRegionInput").value;
+  const apiKeyInput = document.getElementById("apiKeyInput");
+  const apiKey = (apiKeyInput?.value || "").trim();
+  const isMaskedApiValue = apiKeyInput?.dataset.masked === "true";
   const statusEl = document.getElementById("saveStatus");
 
   if (!statusEl) return;
@@ -1527,33 +1633,47 @@ function saveConfig() {
     return;
   }
 
+  if (!hasConfiguredApiKey && !apiKey) {
+    statusEl.textContent = "API key is required for first-time setup";
+    statusEl.classList.add("error");
+    return;
+  }
+
+  const payload = {
+    backgroundColor,
+    textColor,
+    borderStyle,
+    overlayBackgroundTheme,
+    glassBlurPx,
+    glassTintColor,
+    glassTintOpacity,
+    glassBorderOpacity,
+    glassShadowStrength,
+    transparentOverlay,
+    showConnection,
+    showLastUpdated,
+    showAgentIcons: showAgentIconsValue,
+    maxMatchResults: maxMatchResultsValue,
+    trackingDayResetTime: trackingDayResetTimeValue,
+    player: { name: playerName, tag: playerTag, region: playerRegion }
+  };
+  if (apiKey && !isMaskedApiValue) {
+    payload.apiKey = apiKey;
+  }
+
   fetchWithFallback(CONFIG_PATH, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      backgroundColor,
-      textColor,
-      borderStyle,
-      overlayBackgroundTheme,
-      glassBlurPx,
-      glassTintColor,
-      glassTintOpacity,
-      glassBorderOpacity,
-      glassShadowStrength,
-      transparentOverlay,
-      showConnection,
-      showLastUpdated,
-      showAgentIcons: showAgentIconsValue,
-      maxMatchResults: maxMatchResultsValue,
-      trackingDayResetTime: trackingDayResetTimeValue,
-      player: { name: playerName, tag: playerTag, region: playerRegion }
-    })
+    body: JSON.stringify(payload)
   })
     .then(res => res.json())
     .then(data => {
       if (data.success) {
         statusEl.textContent = "Saved!";
         statusEl.classList.add("success");
+        hasConfiguredApiKey = Boolean(data.hasApiKey);
+        setApiKeyFieldMaskState(hasConfiguredApiKey);
+        setApiKeyVisibility(false);
         applyTheme(backgroundColor, textColor, borderStyle, overlayBackgroundTheme, transparentOverlay, {
           glassBlurPx,
           glassTintColor,
@@ -1829,6 +1949,26 @@ loadConfig();
 fetchRank();
 setInterval(fetchRank, 5000);
 document.getElementById("saveConfigBtn").addEventListener("click", saveConfig);
+const apiKeyInput = document.getElementById("apiKeyInput");
+const apiKeyVisibilityBtn = document.getElementById("apiKeyVisibilityBtn");
+if (apiKeyInput) {
+  apiKeyInput.addEventListener("focus", () => {
+    if (apiKeyInput.dataset.masked === "true") {
+      setApiKeyFieldMaskState(false);
+    }
+  });
+  apiKeyInput.addEventListener("input", () => {
+    if ((apiKeyInput.value || "").trim() !== "") {
+      apiKeyInput.dataset.masked = "false";
+    }
+  });
+}
+if (apiKeyVisibilityBtn) {
+  apiKeyVisibilityBtn.addEventListener("click", () => {
+    const visible = apiKeyInput?.type === "text";
+    setApiKeyVisibility(!visible);
+  });
+}
 ["overlayBackgroundThemeInput"].forEach((id) => {
   const input = document.getElementById(id);
   if (!input) return;

@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## [1.2.2] - 2026-04-18
+
+### Added
+- Added API key controls directly in overlay settings (`HenrikDev API key`) with masked display and eye-toggle visibility.
+- Added `hasApiKey` flag in runtime config responses so UI can render masked key state without exposing secret values.
+- Added secret safety test command `npm run check:secrets` backed by `tests/secrets-guard.test.js`.
+
+### Changed
+- Changed server startup to be non-interactive; startup no longer prompts for API key input.
+- Changed API key save flow to be UI/config driven while preserving masked placeholder behavior in UI.
+- Changed API key settings row layout to remain on a single line in the config panel.
+- Updated `config.example.json` to keep `apiKey` empty by default.
+
+### Fixed
+- Fixed hardcoded API key usage in runtime defaults and request URL construction.
+- Fixed accidental secret leakage risk by enforcing empty `config.json` API key in test guard before push.
+
 ## [1.2.1] - 2026-04-18
 
 ### Added

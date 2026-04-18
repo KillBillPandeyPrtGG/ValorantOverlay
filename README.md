@@ -15,6 +15,7 @@ It shows live rank, RR, match-point history, recent agents, and configurable UI 
 - Empty-state aware history/agent rows (hidden when no daily competitive matches exist)
 - Recent agent strip with local icon caching
 - In-overlay config panel for player and UI settings
+- In-overlay API key management with masked field and eye-toggle visibility
 - API rate-limit protections with adaptive backoff
 - Cache-control headers to avoid stale OBS/browser content
 
@@ -55,7 +56,7 @@ copy config.example.json config.json
 - `player.name`
 - `player.tag`
 - `player.region`
-- `apiKey`
+- `apiKey` (optional; you can also set/update it from the config UI)
 
 4. Start server:
 
@@ -77,10 +78,17 @@ node server.js
 
 Use `config.json` for defaults and `POST /config` (via UI) for runtime updates.
 
+API key workflow:
+
+- Open overlay config panel and enter HenrikDev API key in `HenrikDev API key` field.
+- Saved key is shown as masked `********` in the UI.
+- Use the eye icon to temporarily show/hide what you typed.
+- Leave API key field as-is to keep existing saved key unchanged.
+
 Supported keys:
 
 - `player.name`, `player.tag`, `player.region`
-- `apiKey`
+- `apiKey` (optional)
 - `pollIntervalMs` (clamped 10000-300000)
 - `trackingDayResetTime` (`HH:MM` in 24h, local server time; default `00:00`)
 - `rankImageBasePath`
@@ -118,10 +126,17 @@ Default `rankImageBasePath` is `/assets/rank-images/` and points to bundled rank
 ## Operational Notes
 
 - Default backend polling is 30 seconds.
+- Server startup is non-interactive and never prompts for API key input.
+- If `apiKey` is empty, the overlay stays offline until key is provided in `config.json` or via `POST /config` (UI save).
 - On `429` responses, polling backs off using `Retry-After` + exponential delay.
 - Agent icons are downloaded once and reused from `overlay/cache/agent-icons`.
 - Static responses are served with no-store headers to reduce stale OBS content.
 - Overlay text and rank image include subtle shadows to improve readability over bright or busy scenes.
+
+## Push Safety
+
+- Run `npm run check:secrets` before pushing.
+- The guard fails if `config.json` contains a non-empty `apiKey` or if a real HenrikDev key pattern is found in repository files.
 
 ## Troubleshooting
 

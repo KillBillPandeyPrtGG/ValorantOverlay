@@ -1,6 +1,6 @@
 {
   "player": { "name": "YourName", "tag": "0000", "region": "eu" },
-  "apiKey": "HDEV-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "apiKey": "",
   "pollIntervalMs": 30000,
   "trackingDayResetTime": "00:00",
   "rankImageBasePath": "/assets/rank-images/",

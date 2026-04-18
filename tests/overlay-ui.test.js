@@ -56,3 +56,17 @@ test("rank refresh logic preserves active theme if payload theme is absent", () 
   assert.match(overlayHtml, /const hasPayloadTheme = typeof json\.overlayBackgroundTheme === "string"/);
   assert.match(overlayHtml, /: currentOverlayBackgroundTheme;/);
 });
+
+test("config UI includes API key field with visibility toggle", () => {
+  assert.match(overlayHtml, /id="apiKeyInput" class="config-input" type="password"/);
+  assert.match(overlayHtml, /id="apiKeyVisibilityBtn" class="api-key-visibility-btn" type="button"/);
+  assert.match(overlayHtml, /function setApiKeyVisibility\(visible\)/);
+  assert.doesNotMatch(overlayHtml, /clearApiKeyInput/);
+});
+
+test("save logic enforces first-time key and masked placeholder handling", () => {
+  assert.match(overlayHtml, /let hasConfiguredApiKey = false;/);
+  assert.match(overlayHtml, /if \(!hasConfiguredApiKey && !apiKey\)/);
+  assert.match(overlayHtml, /function setApiKeyFieldMaskState\(masked\)/);
+  assert.match(overlayHtml, /if \(apiKey && !isMaskedApiValue\) \{[\s\S]*payload\.apiKey = apiKey;/);
+});

@@ -12,7 +12,7 @@ const {
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const CONFIG_PATH = "./config.json";
+const CONFIG_PATH = path.join(__dirname, "config.json");
 const AGENT_ICON_CACHE_DIR = path.join(__dirname, "overlay", "cache", "agent-icons");
 
 try {
@@ -25,7 +25,7 @@ app.use(express.json());
 
 const defaultConfig = {
   player: { name: "YourName", tag: "0000", region: "ap" },
-  apiKey: "HDEV-632cdd82-0292-44de-be24-2ca1315cf52c",
+  apiKey: "",
   pollIntervalMs: 30000,
   trackingDayResetTime: "00:00",
   rankImageBasePath: "/assets/rank-images/",
@@ -53,6 +53,11 @@ function isSafeHexColor(value) {
   return typeof value === "string" && /^#([0-9A-F]{6}|[0-9A-F]{3})$/i.test(value);
 }
 
+function getConfiguredApiKey() {
+  if (typeof config.apiKey !== "string") return "";
+  return config.apiKey.trim();
+}
+
 try {
   if (fs.existsSync(CONFIG_PATH)) {
     const raw = fs.readFileSync(CONFIG_PATH, "utf8");
@@ -70,6 +75,11 @@ try {
 // Ensure newly introduced keys persist even when older config.json files are loaded.
 try {
   let normalized = false;
+  const normalizedApiKey = getConfiguredApiKey();
+  if (config.apiKey !== normalizedApiKey) {
+    config.apiKey = normalizedApiKey;
+    normalized = true;
+  }
   if (typeof config.transparentOverlay !== "boolean") {
     config.transparentOverlay = false;
     normalized = true;
@@ -162,6 +172,21 @@ function getConfiguredPollIntervalMs() {
   const parsed = Number(config.pollIntervalMs);
   if (!Number.isFinite(parsed)) return defaultConfig.pollIntervalMs;
   return Math.max(10000, Math.min(300000, Math.floor(parsed)));
+}
+
+function buildApiUrl(pathname, searchParams = {}) {
+  const url = new URL(`${API_BASE}${pathname}`);
+  for (const [key, value] of Object.entries(searchParams)) {
+    url.searchParams.set(key, String(value));
+  }
+  url.searchParams.set("api_key", getConfiguredApiKey());
+  return url.toString();
+}
+
+async function ensureApiKeyConfigured() {
+  if (getConfiguredApiKey()) return true;
+  console.warn("No HenrikDev API key configured. Server started without key; set it from config UI or config.json.");
+  return false;
 }
 
 function parseRetryAfterMs(response) {
@@ -361,6 +386,7 @@ app.get("/config", (req, res) => {
     showConnection: config.showConnection !== false,
     showAgentIcons: config.showAgentIcons !== false,
     showLastUpdated: config.showLastUpdated !== false,
+    hasApiKey: Boolean(getConfiguredApiKey()),
     trackingDayResetTime: parseTrackingDayResetTime(config.trackingDayResetTime),
     maxMatchResults: Math.max(1, Math.min(10, Math.floor(Number(config.maxMatchResults) || 10)))
   });
@@ -371,6 +397,9 @@ app.post("/config", (req, res) => {
   const updates = {};
 
   const allowedBorderStyles = ["solid", "dashed", "dotted", "double", "groove", "ridge", "inset", "outset", "none"];
+  if (typeof req.body.apiKey === "string") {
+    updates.apiKey = req.body.apiKey.trim();
+  }
   if (safeHex(req.body.backgroundColor)) {
     updates.backgroundColor = req.body.backgroundColor;
   }
@@ -491,12 +520,16 @@ app.post("/config", (req, res) => {
       tag: config.player?.tag || "",
       region: config.player?.region || ""
     };
+    const previousApiKey = getConfiguredApiKey();
     const updatedConfig = { ...config, ...updates };
+    const nextApiKey = typeof updatedConfig.apiKey === "string" ? updatedConfig.apiKey.trim() : "";
+    updatedConfig.apiKey = nextApiKey;
     const nextPlayer = updatedConfig.player || previousPlayer;
     const playerChanged =
       previousPlayer.name !== nextPlayer.name ||
       previousPlayer.tag !== nextPlayer.tag ||
       previousPlayer.region !== nextPlayer.region;
+    const apiKeyChanged = previousApiKey !== nextApiKey;
 
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(updatedConfig, null, 2));
     config = updatedConfig;
@@ -517,13 +550,15 @@ app.post("/config", (req, res) => {
     cache.maxMatchResults = Math.max(1, Math.min(10, Math.floor(Number(config.maxMatchResults) || 10)));
     cache.player = config.player;
 
-    if (playerChanged) {
+    if (playerChanged || apiKeyChanged) {
       cache.rank = null;
       cache.matches = [];
       cache.stats = { wins: 0, losses: 0, streak: 0, type: null };
       cache.lastUpdated = null;
       cache.status = "loading";
-      cache.message = "Refreshing data for updated player...";
+      cache.message = playerChanged
+        ? "Refreshing data for updated player..."
+        : "Refreshing data with updated API key...";
       delete cache.lastError;
       rateLimitedUntil = 0;
       consecutiveRateLimits = 0;
@@ -547,10 +582,12 @@ app.post("/config", (req, res) => {
       showConnection: cache.showConnection,
       showAgentIcons: cache.showAgentIcons,
       showLastUpdated: cache.showLastUpdated,
+      hasApiKey: Boolean(getConfiguredApiKey()),
       trackingDayResetTime: cache.trackingDayResetTime,
       maxMatchResults: cache.maxMatchResults,
       player: cache.player,
-      playerChanged
+      playerChanged,
+      apiKeyChanged
     });
   } catch (e) {
     console.error("Failed to save config:", e.message);
@@ -560,18 +597,28 @@ app.post("/config", (req, res) => {
 
 async function fetchData() {
   try {
+    const apiKey = getConfiguredApiKey();
+    if (!apiKey) {
+      cache.status = "offline";
+      cache.message = "API key missing";
+      cache.lastError = "Missing apiKey in config";
+      return;
+    }
+
     const activePlayer = config.player;
     const mmrJson = await fetchJsonOrThrow(
-      `${API_BASE}/v1/mmr/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}?api_key=${config.apiKey}`
+      buildApiUrl(`/v1/mmr/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}`)
     );
 
     const requestedMatchSize = 10;
     const matchJson = await fetchJsonOrThrow(
-      `${API_BASE}/v3/matches/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}?size=${requestedMatchSize}&api_key=${config.apiKey}`
+      buildApiUrl(`/v3/matches/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}`, {
+        size: requestedMatchSize
+      })
     );
 
     const mmrHistoryJson = await fetchJsonOrThrow(
-      `${API_BASE}/v1/mmr-history/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}?api_key=${config.apiKey}`
+      buildApiUrl(`/v1/mmr-history/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}`)
     );
     const mmrHistoryData = Array.isArray(mmrHistoryJson.data) ? mmrHistoryJson.data : [];
     const mmrByMatchId = new Map(
@@ -736,8 +783,6 @@ async function runPollingLoop() {
   pollTimer = setTimeout(runPollingLoop, Math.max(1000, nextDelayMs));
 }
 
-runPollingLoop();
-
 app.get("/rank", (req, res) => res.json(cache));
 
 app.get("/", (req, res) => {
@@ -747,6 +792,15 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "overlay", "index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+async function startServer() {
+  await ensureApiKeyConfigured();
+  runPollingLoop();
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer().catch((error) => {
+  console.error("Failed to start server:", error.message);
+  process.exit(1);
 });
