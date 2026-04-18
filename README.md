@@ -9,7 +9,7 @@ It shows live rank, RR, match-point history, recent agents, and configurable UI 
 - Live rank + RR updates from HenrikDev API
 - Rank icon rendering with fallback handling
 - Animated RR transitions and periodic rank icon animation
-- Match-point history with configurable display size (1-12)
+- Match-point history with configurable display size (1-10)
 - Configurable daily reset window via `trackingDayResetTime`
 - Competitive-only daily history and recent agent strip
 - Empty-state aware history/agent rows (hidden when no daily competitive matches exist)
@@ -89,11 +89,16 @@ Supported keys:
 - `backgroundColor`
 - `textColor`
 - `borderStyle`
+- `overlayBackgroundTheme` (`solid`, `transparent`, or `glass`)
+- `glassBlurPx` (clamped 4-28)
+- `glassTintOpacity` (clamped 0.05-0.35)
+- `glassBorderOpacity` (clamped 0.12-0.70)
+- `glassShadowStrength` (clamped 0.20-0.80)
 - `transparentOverlay`
 - `showConnection`
 - `showLastUpdated`
 - `showAgentIcons`
-- `maxMatchResults` (clamped 1-12)
+- `maxMatchResults` (clamped 1-10)
 
 Default `rankImageBasePath` is `/assets/rank-images/` and points to bundled rank images tracked in this repository.
 

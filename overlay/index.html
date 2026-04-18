@@ -3,10 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <style>
+ :root {
+  --overlay-left: 20px;
+  --overlay-top: 20px;
+  --overlay-estimated-width: 560px;
+  --panel-gap: 14px;
+
+  --panel-radius: 16px;
+  --panel-solid-bg: rgba(12, 15, 27, 0.88);
+  --panel-solid-border: rgba(255, 255, 255, 0.12);
+  --panel-solid-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-blur: 12px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+ }
+
+html,
 body {
   margin: 0;
-  background: #101827;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 0;
+  background: transparent !important;
+  overflow: hidden;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+html.overlay-only,
+body.overlay-only {
+  background: transparent !important;
+}
+
+body.overlay-only .config-panel {
+  display: none !important;
+}
+
+body.overlay-only .overlay {
+  top: 0 !important;
+  left: 0 !important;
+  max-width: 100% !important;
+}
+
+body.overlay-only.overlay-only-force-transparent-panel .panel {
+  background: transparent !important;
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .overlay {
@@ -16,6 +60,17 @@ body {
   width: auto;
   max-width: calc(100% - 40px);
   color: #eef2ff;
+  z-index: 2;
+}
+
+.overlay-root {
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 @media (max-width: 660px) {
@@ -23,16 +78,21 @@ body {
     left: 10px;
     top: 10px;
   }
-  .body-row,
-  .config-row {
+  .body-row {
     flex-direction: column;
+  }
+  .config-row {
+    overflow-x: visible;
   }
   .config-actions {
     flex-direction: column;
     align-items: stretch;
   }
   .config-panel {
-    margin-top: 380px;
+    left: 10px;
+    top: 248px;
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 260px);
   }
 }
 
@@ -40,10 +100,46 @@ body {
   width: fit-content;
   max-width: 100%;
   padding: 18px 20px;
-  border-radius: 18px;
-  background: rgba(12, 15, 27, 0.88);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+  border-radius: var(--panel-radius);
+  background: var(--panel-solid-bg);
+  border: 1px solid var(--panel-solid-border);
+  box-shadow: var(--panel-solid-shadow);
+}
+
+.panel.theme-solid {
+  background: var(--panel-solid-bg);
+  border-color: var(--panel-solid-border);
+  box-shadow: var(--panel-solid-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.panel.theme-transparent {
+  background: transparent !important;
+  border-color: transparent !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.panel.theme-glass,
+.glass-card,
+.glass-panel {
+  background: var(--glass-bg);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  will-change: backdrop-filter;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel.theme-glass,
+  .glass-card,
+  .glass-panel {
+    background: rgba(20, 20, 20, 0.6);
+  }
 }
 
 .top-row,
@@ -303,98 +399,293 @@ body {
 }
 
 .config-panel {
-  width: 100%;
-  margin-top: 520px;
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: rgba(16, 24, 39, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.14);
+  position: absolute;
+  left: calc(var(--overlay-left) + var(--overlay-estimated-width) + var(--panel-gap));
+  top: var(--overlay-top);
+  width: min(760px, calc(100vw - (var(--overlay-left) + var(--overlay-estimated-width) + var(--panel-gap)) - 20px));
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(165deg, rgba(12, 18, 33, 0.92), rgba(19, 32, 56, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.config-panel.below-overlay {
+  left: var(--overlay-left);
+  top: calc(var(--overlay-top) + var(--overlay-estimated-height) + var(--panel-gap));
+}
+
+@media (max-width: 1360px) {
+  .config-panel {
+    left: 20px;
+    top: 248px;
+    width: calc(100vw - 40px);
+    max-height: calc(100vh - 260px);
+  }
 }
 
 .config-heading {
-  font-size: 14px;
-  font-weight: 700;
-  margin: 0 0 14px;
-  color: #eef2ff;
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 16px;
+  color: #f8fafc;
+  letter-spacing: 0.01em;
 }
 
 .config-group {
   display: grid;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.24);
 }
 
 .config-group:last-of-type {
   margin-bottom: 0;
 }
 
+.glass-config-group {
+  display: none;
+}
+
+.glass-config-group.visible {
+  display: grid;
+}
+
 .config-group-title {
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: 12px;
+  color: #cbd5e1;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.09em;
+  font-weight: 700;
 }
 
 .config-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 14px;
-  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: stretch;
+  overflow-x: visible;
 }
 
 .config-item {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex: 1 1 220px;
+  min-width: 220px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .config-item label {
+  flex: 1;
   font-size: 11px;
-  color: #94a3b8;
+  color: #dbeafe;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  white-space: normal;
+  line-height: 1.2;
 }
 
 .config-input,
 .config-select {
-  height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0 12px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #eef2ff;
+  height: 30px;
+  min-width: 112px;
+  max-width: 156px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 0 10px;
+  background: rgba(15, 23, 42, 0.95);
+  color: #f1f5f9;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.config-item .config-input,
+.config-item .config-select {
+  flex: 0 1 156px;
+}
+
+#overlayBackgroundThemeInput {
+  max-width: 190px;
+  flex-basis: 190px;
+}
+
+.config-input[type="range"] {
+  min-width: 120px;
+  max-width: 160px;
+  accent-color: #38bdf8;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.config-range-value {
+  min-width: 42px;
+  text-align: right;
+  font-size: 11px;
+  color: #bfdbfe;
+  font-weight: 700;
+}
+
+.glass-config-group .config-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.glass-config-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "label value"
+    "slider slider";
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 230px;
+}
+
+.glass-config-item label {
+  grid-area: label;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.glass-config-item .config-range-value {
+  grid-area: value;
+  min-width: 46px;
+}
+
+.glass-config-item .config-input[type="range"] {
+  grid-area: slider;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.config-select {
+  background: #0b1220;
+  color: #f8fafc;
+}
+
+.config-select option {
+  background: #0b1220;
+  color: #f8fafc;
 }
 
 .config-input[type="color"] {
+  min-width: 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+
+.config-input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 50%;
+}
+
+.config-input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.config-input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.color-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.color-circle-button {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(226, 232, 240, 0.72);
+  background: #0c0f1b;
+  cursor: pointer;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+}
+
+.color-circle-button:hover,
+.color-circle-button:focus-visible {
+  border-color: #e2e8f0;
+  box-shadow: 0 0 0 2px rgba(226, 232, 240, 0.34);
+}
+
+.color-circle-button.selected {
+  border-color: #f8fafc;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.55);
+}
+
+.config-input[type="checkbox"] {
+  min-width: 18px;
+  width: 18px;
+  height: 18px;
+  accent-color: #4cff9a;
 }
 
 .config-actions {
   margin-top: 18px;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .config-button {
-  padding: 10px 16px;
-  border-radius: 14px;
+  padding: 9px 18px;
+  border-radius: 999px;
   border: none;
-  background: #4cff9a;
+  background: linear-gradient(120deg, #4cff9a, #22d3ee);
   color: #08110a;
+  font-family: inherit;
   font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
+  box-shadow: 0 8px 20px rgba(34, 211, 238, 0.25);
 }
 
 .config-button:hover {
-  background: #3cd87f;
+  filter: brightness(1.04);
 }
 
 .config-status {
   font-size: 12px;
-  color: #94a3b8;
+  color: #cbd5e1;
+  font-weight: 600;
 }
 
 .config-status.success {
@@ -466,6 +757,7 @@ body {
 </head>
 
 <body>
+<div class="overlay-root">
 <div class="overlay">
   <div class="panel">
     <div class="top-row">
@@ -516,11 +808,11 @@ body {
     <div class="config-row">
       <div class="config-item">
         <label for="playerNameInput">Player name</label>
-        <input id="playerNameInput" class="config-input" type="text" placeholder="soulkratosgg">
+        <input id="playerNameInput" class="config-input" type="text" placeholder="YourName">
       </div>
       <div class="config-item">
         <label for="playerTagInput">Player tag</label>
-        <input id="playerTagInput" class="config-input" type="text" placeholder="111">
+        <input id="playerTagInput" class="config-input" type="text" placeholder="0000">
       </div>
       <div class="config-item">
         <label for="playerRegionInput">Region</label>
@@ -540,30 +832,53 @@ body {
     <div class="config-group-title">Theme</div>
     <div class="config-row">
       <div class="config-item">
-        <label for="bgColorInput">Background</label>
-        <input id="bgColorInput" class="config-input" type="color" value="#0c0f1b">
+        <label for="bgColorInput">Background color</label>
+        <button id="bgColorButton" type="button" class="color-circle-button selected" aria-label="Background color picker"></button>
+        <input id="bgColorInput" class="config-input color-input-hidden" type="color" value="#0c0f1b">
       </div>
       <div class="config-item">
-        <label for="textColorInput">Text</label>
-        <input id="textColorInput" class="config-input" type="color" value="#eef2ff">
+        <label for="textColorInput">Text color</label>
+        <button id="textColorButton" type="button" class="color-circle-button selected" aria-label="Text color picker"></button>
+        <input id="textColorInput" class="config-input color-input-hidden" type="color" value="#eef2ff">
       </div>
       <div class="config-item">
-        <label for="borderStyleInput">Border style</label>
-        <select id="borderStyleInput" class="config-select">
+        <label for="overlayBackgroundThemeInput">Background theme</label>
+        <select id="overlayBackgroundThemeInput" class="config-select">
           <option value="solid">Solid</option>
-          <option value="dashed">Dashed</option>
-          <option value="dotted">Dotted</option>
-          <option value="double">Double</option>
-          <option value="groove">Groove</option>
-          <option value="ridge">Ridge</option>
-          <option value="inset">Inset</option>
-          <option value="outset">Outset</option>
-          <option value="none">None</option>
+          <option value="transparent">Transparent</option>
+          <option value="glass">Glass</option>
         </select>
       </div>
+    </div>
+  </div>
+
+  <div id="glassConfigGroup" class="config-group glass-config-group">
+    <div class="config-group-title">Glass Theme</div>
+    <div class="config-row">
       <div class="config-item">
-        <label for="transparentOverlayInput">Transparent overlay</label>
-        <input id="transparentOverlayInput" class="config-input" type="checkbox">
+        <label for="glassTintColorInput">Glass color</label>
+        <button id="glassTintColorButton" type="button" class="color-circle-button selected" aria-label="Glass tint color picker"></button>
+        <input id="glassTintColorInput" class="config-input color-input-hidden" type="color" value="#ffffff">
+      </div>
+      <div class="config-item glass-config-item">
+        <label for="glassBlurPxInput">Glass blur</label>
+        <span id="glassBlurPxValue" class="config-range-value">14px</span>
+        <input id="glassBlurPxInput" class="config-input" type="range" min="4" max="20" step="1" value="14">
+      </div>
+      <div class="config-item glass-config-item">
+        <label for="glassTintOpacityInput">Glass tint</label>
+        <span id="glassTintOpacityValue" class="config-range-value">0.12</span>
+        <input id="glassTintOpacityInput" class="config-input" type="range" min="0.05" max="0.35" step="0.01" value="0.12">
+      </div>
+      <div class="config-item glass-config-item">
+        <label for="glassBorderOpacityInput">Glass border</label>
+        <span id="glassBorderOpacityValue" class="config-range-value">0.34</span>
+        <input id="glassBorderOpacityInput" class="config-input" type="range" min="0.12" max="0.70" step="0.01" value="0.34">
+      </div>
+      <div class="config-item glass-config-item">
+        <label for="glassShadowStrengthInput">Glass depth</label>
+        <span id="glassShadowStrengthValue" class="config-range-value">0.42</span>
+        <input id="glassShadowStrengthInput" class="config-input" type="range" min="0.20" max="0.80" step="0.01" value="0.42">
       </div>
     </div>
   </div>
@@ -590,19 +905,21 @@ body {
     <div class="config-group-title">Data</div>
     <div class="config-row">
       <div class="config-item">
-        <label for="maxMatchResultsInput">Max games shown (1-12)</label>
-        <input id="maxMatchResultsInput" class="config-input" type="number" min="1" max="12" step="1" value="10">
+        <label for="maxMatchResultsInput">Max games shown (1-10)</label>
+        <input id="maxMatchResultsInput" class="config-input" type="number" min="1" max="10" step="1" value="10">
       </div>
       <div class="config-item">
         <label for="trackingDayResetTimeInput">Day reset time (24h)</label>
-        <input id="trackingDayResetTimeInput" class="config-input" type="time" step="60" value="00:00">
+        <select id="trackingDayResetTimeInput" class="config-select"></select>
       </div>
     </div>
   </div>
+
   <div class="config-actions">
     <button id="saveConfigBtn" class="config-button" type="button">Save config</button>
     <div id="saveStatus" class="config-status">Ready</div>
   </div>
+</div>
 </div>
 
 <script>
@@ -612,6 +929,12 @@ const DEFAULT_IMAGE_PATH = "/assets/rank-images/";
 const DEFAULT_BG_COLOR = "#0c0f1b";
 const DEFAULT_TEXT_COLOR = "#eef2ff";
 const DEFAULT_BORDER_STYLE = "solid";
+const DEFAULT_OVERLAY_BACKGROUND_THEME = "solid";
+const DEFAULT_GLASS_BLUR_PX = 14;
+const DEFAULT_GLASS_TINT_COLOR = "#ffffff";
+const DEFAULT_GLASS_TINT_OPACITY = 0.12;
+const DEFAULT_GLASS_BORDER_OPACITY = 0.34;
+const DEFAULT_GLASS_SHADOW_STRENGTH = 0.42;
 const DEFAULT_TRACKING_RESET_TIME = "00:00";
 
 let displayedRR = null;
@@ -625,7 +948,82 @@ let activeRankAnimationIntervalMs = null;
 let lastConnectedOrigin = "";
 let maxMatchResults = 10;
 let showAgentIcons = true;
+let currentBackgroundColor = DEFAULT_BG_COLOR;
+let currentTextColor = DEFAULT_TEXT_COLOR;
+let currentBorderStyle = DEFAULT_BORDER_STYLE;
+let currentOverlayBackgroundTheme = DEFAULT_OVERLAY_BACKGROUND_THEME;
+let currentGlassSettings = {
+  blurPx: DEFAULT_GLASS_BLUR_PX,
+  tintColor: DEFAULT_GLASS_TINT_COLOR,
+  tintOpacity: DEFAULT_GLASS_TINT_OPACITY,
+  borderOpacity: DEFAULT_GLASS_BORDER_OPACITY,
+  shadowStrength: DEFAULT_GLASS_SHADOW_STRENGTH
+};
 const LAST_AGENT_COUNT = 10;
+
+function isOverlayOnlyMode() {
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    const value = String(params.get("overlayOnly") || params.get("obs") || "").trim().toLowerCase();
+    return value === "1" || value === "true" || value === "yes";
+  } catch {
+    return false;
+  }
+}
+
+function shouldForceTransparentPanelInOverlayOnlyMode() {
+  try {
+    const params = new URLSearchParams(window.location.search || "");
+    const value = String(params.get("transparentPanel") || "").trim().toLowerCase();
+    return value === "1" || value === "true" || value === "yes";
+  } catch {
+    return false;
+  }
+}
+
+function isObsBrowser() {
+  try {
+    const ua = String(navigator.userAgent || "").toLowerCase();
+    return ua.includes("obs") || ua.includes("obssource") || ua.includes("obsbrowser");
+  } catch {
+    return false;
+  }
+}
+
+function syncConfigPanelLayout() {
+  const overlay = document.querySelector(".overlay");
+  const panel = document.querySelector(".config-panel");
+  if (!overlay || !panel) return;
+  if (isOverlayOnlyMode()) return;
+
+  const overlayRect = overlay.getBoundingClientRect();
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+  const gap = 14;
+  const sidePadding = 20;
+  const rightSpace = viewportWidth - overlayRect.right - gap - sidePadding;
+  const canFitRight = rightSpace >= 300;
+
+  document.documentElement.style.setProperty("--overlay-left", `${Math.max(10, overlayRect.left)}px`);
+  document.documentElement.style.setProperty("--overlay-top", `${Math.max(10, overlayRect.top)}px`);
+  document.documentElement.style.setProperty("--overlay-estimated-width", `${Math.max(300, overlayRect.width)}px`);
+  document.documentElement.style.setProperty("--overlay-estimated-height", `${Math.max(120, overlayRect.height)}px`);
+
+  if (canFitRight) {
+    panel.classList.remove("below-overlay");
+    panel.style.left = `${Math.max(10, overlayRect.right + gap)}px`;
+    panel.style.top = `${Math.max(10, overlayRect.top)}px`;
+    panel.style.width = `${Math.max(300, Math.min(760, rightSpace))}px`;
+    panel.style.maxHeight = `${Math.max(220, viewportHeight - overlayRect.top - sidePadding)}px`;
+    return;
+  }
+
+  panel.classList.add("below-overlay");
+  panel.style.left = `${Math.max(10, overlayRect.left)}px`;
+  panel.style.top = `${Math.max(10, overlayRect.bottom + gap)}px`;
+  panel.style.width = `${Math.max(300, viewportWidth - Math.max(10, overlayRect.left) - sidePadding)}px`;
+  panel.style.maxHeight = `${Math.max(180, viewportHeight - (overlayRect.bottom + gap) - sidePadding)}px`;
+}
 
 function getRequestOrigins() {
   const origins = [];
@@ -710,20 +1108,198 @@ function scheduleRankAnimation(intervalMs) {
   rankAnimationTimer = setInterval(animateRankIcon, rankAnimationIntervalMs);
 }
 
-function applyTheme(backgroundColor, textColor, borderStyle, transparentOverlay) {
+function normalizeOverlayBackgroundTheme(value, transparentOverlay) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "solid" || normalized === "transparent" || normalized === "glass") {
+    return normalized;
+  }
+  if (transparentOverlay === true) {
+    return "transparent";
+  }
+  return DEFAULT_OVERLAY_BACKGROUND_THEME;
+}
+
+function clampNumber(value, min, max, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, parsed));
+}
+
+function getNormalizedGlassSettings(source) {
+  return {
+    blurPx: Math.round(clampNumber(source?.glassBlurPx, 4, 20, DEFAULT_GLASS_BLUR_PX)),
+    tintColor: normalizeHexColor(source?.glassTintColor) || DEFAULT_GLASS_TINT_COLOR,
+    tintOpacity: clampNumber(source?.glassTintOpacity, 0.05, 0.35, DEFAULT_GLASS_TINT_OPACITY),
+    borderOpacity: clampNumber(source?.glassBorderOpacity, 0.12, 0.7, DEFAULT_GLASS_BORDER_OPACITY),
+    shadowStrength: clampNumber(source?.glassShadowStrength, 0.2, 0.8, DEFAULT_GLASS_SHADOW_STRENGTH)
+  };
+}
+
+function getSavedThemeFromStorage() {
+  try {
+    const savedTheme = localStorage.getItem("overlayBackgroundTheme");
+    if (!savedTheme) return DEFAULT_OVERLAY_BACKGROUND_THEME;
+    return normalizeOverlayBackgroundTheme(savedTheme, false);
+  } catch {
+    return DEFAULT_OVERLAY_BACKGROUND_THEME;
+  }
+}
+
+function saveThemeToStorage(theme) {
+  try {
+    localStorage.setItem("overlayBackgroundTheme", theme);
+  } catch {
+    // Ignore storage errors in locked-down browser contexts.
+  }
+}
+
+function updateGlassRangeValueBubbles() {
+  const blurInput = document.getElementById("glassBlurPxInput");
+  const tintInput = document.getElementById("glassTintOpacityInput");
+  const borderInput = document.getElementById("glassBorderOpacityInput");
+  const shadowInput = document.getElementById("glassShadowStrengthInput");
+  const blurValue = document.getElementById("glassBlurPxValue");
+  const tintValue = document.getElementById("glassTintOpacityValue");
+  const borderValue = document.getElementById("glassBorderOpacityValue");
+  const shadowValue = document.getElementById("glassShadowStrengthValue");
+
+  if (blurInput && blurValue) blurValue.textContent = `${Math.round(Number(blurInput.value) || DEFAULT_GLASS_BLUR_PX)}px`;
+  if (tintInput && tintValue) tintValue.textContent = Number(tintInput.value || DEFAULT_GLASS_TINT_OPACITY).toFixed(2);
+  if (borderInput && borderValue) borderValue.textContent = Number(borderInput.value || DEFAULT_GLASS_BORDER_OPACITY).toFixed(2);
+  if (shadowInput && shadowValue) shadowValue.textContent = Number(shadowInput.value || DEFAULT_GLASS_SHADOW_STRENGTH).toFixed(2);
+}
+
+function normalizeHexColor(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim().toLowerCase();
+  return /^#([0-9a-f]{6})$/.test(trimmed) ? trimmed : "";
+}
+
+function hexToRgb(hex) {
+  const normalized = normalizeHexColor(hex);
+  if (!normalized) return { r: 255, g: 255, b: 255 };
+  const value = normalized.slice(1);
+  return {
+    r: Number.parseInt(value.slice(0, 2), 16),
+    g: Number.parseInt(value.slice(2, 4), 16),
+    b: Number.parseInt(value.slice(4, 6), 16)
+  };
+}
+
+function setColorCircleButtonValue(button, colorValue) {
+  if (!button) return;
+  const normalized = normalizeHexColor(colorValue) || "#000000";
+  button.style.background = normalized;
+  button.classList.add("selected");
+}
+
+function previewThemeFromInputs() {
+  const bgColor = document.getElementById("bgColorInput")?.value || currentBackgroundColor;
+  const textColor = document.getElementById("textColorInput")?.value || currentTextColor;
+  const selectedTheme = normalizeOverlayBackgroundTheme(document.getElementById("overlayBackgroundThemeInput")?.value, false);
+  const nextGlassSettings = {
+    glassBlurPx: document.getElementById("glassBlurPxInput")?.value,
+    glassTintColor: document.getElementById("glassTintColorInput")?.value,
+    glassTintOpacity: document.getElementById("glassTintOpacityInput")?.value,
+    glassBorderOpacity: document.getElementById("glassBorderOpacityInput")?.value,
+    glassShadowStrength: document.getElementById("glassShadowStrengthInput")?.value
+  };
+
+  applyTheme(bgColor, textColor, currentBorderStyle, selectedTheme, selectedTheme === "transparent", nextGlassSettings);
+}
+
+function initializeColorCircleButtons() {
+  const pairs = [
+    { buttonId: "bgColorButton", inputId: "bgColorInput" },
+    { buttonId: "textColorButton", inputId: "textColorInput" },
+    { buttonId: "glassTintColorButton", inputId: "glassTintColorInput" }
+  ];
+
+  pairs.forEach(({ buttonId, inputId }) => {
+    const button = document.getElementById(buttonId);
+    const input = document.getElementById(inputId);
+    if (!button || !input) return;
+
+    setColorCircleButtonValue(button, input.value);
+
+    button.addEventListener("click", () => {
+      input.click();
+    });
+
+    input.addEventListener("input", () => {
+      setColorCircleButtonValue(button, input.value);
+      previewThemeFromInputs();
+    });
+  });
+}
+
+function toggleGlassConfigVisibility(themeValue) {
+  const glassGroup = document.getElementById("glassConfigGroup");
+  if (!glassGroup) return;
+  const normalizedTheme = normalizeOverlayBackgroundTheme(themeValue, false);
+  glassGroup.classList.toggle("visible", normalizedTheme === "glass");
+}
+
+function applyTheme(backgroundColor, textColor, borderStyle, overlayBackgroundTheme, transparentOverlay, glassSettings) {
   const panel = document.querySelector(".panel");
   const overlay = document.querySelector(".overlay");
-  const bgColor = transparentOverlay ? "transparent" : (backgroundColor || DEFAULT_BG_COLOR);
-  const textCol = textColor || DEFAULT_TEXT_COLOR;
-  const border = borderStyle || DEFAULT_BORDER_STYLE;
-  panel.style.background = bgColor;
-  panel.style.borderStyle = border;
-  panel.style.borderColor = border === "none" ? "transparent" : "rgba(255, 255, 255, 0.12)";
-  panel.style.borderWidth = border === "none" ? "0px" : "1px";
+  const hasThemeValue = typeof overlayBackgroundTheme === "string" && overlayBackgroundTheme.trim() !== "";
+  const theme = normalizeOverlayBackgroundTheme(
+    hasThemeValue ? overlayBackgroundTheme : currentOverlayBackgroundTheme,
+    transparentOverlay
+  );
+  currentOverlayBackgroundTheme = theme;
+  saveThemeToStorage(theme);
+  const normalizedGlassSettings = getNormalizedGlassSettings(glassSettings || currentGlassSettings);
+  currentGlassSettings = normalizedGlassSettings;
+  const bgColor = typeof backgroundColor === "string" && backgroundColor.trim()
+    ? backgroundColor
+    : currentBackgroundColor;
+  const textCol = typeof textColor === "string" && textColor.trim()
+    ? textColor
+    : currentTextColor;
+  const border = typeof borderStyle === "string" && borderStyle.trim()
+    ? borderStyle
+    : currentBorderStyle;
+
+  currentBackgroundColor = bgColor || DEFAULT_BG_COLOR;
+  currentTextColor = textCol || DEFAULT_TEXT_COLOR;
+  currentBorderStyle = border || DEFAULT_BORDER_STYLE;
+
+  panel.classList.remove("theme-solid", "theme-transparent", "theme-glass");
+  panel.classList.add(`theme-${theme}`);
+
+  if (theme === "transparent") {
+    panel.style.removeProperty("--glass-bg");
+    panel.style.removeProperty("--glass-border");
+    panel.style.removeProperty("--glass-blur");
+    panel.style.removeProperty("--glass-shadow");
+    panel.style.removeProperty("--panel-solid-bg");
+    panel.style.removeProperty("--panel-solid-border");
+    panel.style.removeProperty("--panel-solid-shadow");
+    panel.style.borderStyle = "none";
+    panel.style.borderWidth = "0px";
+  } else if (theme === "glass") {
+    const tint = hexToRgb(normalizedGlassSettings.tintColor);
+    panel.style.setProperty("--glass-bg", `rgba(${tint.r}, ${tint.g}, ${tint.b}, ${normalizedGlassSettings.tintOpacity})`);
+    panel.style.setProperty("--glass-border", `rgba(255, 255, 255, ${normalizedGlassSettings.borderOpacity})`);
+    panel.style.setProperty("--glass-blur", `${normalizedGlassSettings.blurPx}px`);
+    panel.style.setProperty("--glass-shadow", `0 8px 32px rgba(0, 0, 0, ${Math.max(0.16, Math.min(0.35, normalizedGlassSettings.shadowStrength))})`);
+    panel.style.borderStyle = "solid";
+    panel.style.borderWidth = "1px";
+  } else {
+    panel.style.setProperty("--panel-solid-bg", bgColor);
+    panel.style.setProperty("--panel-solid-border", border === "none" ? "transparent" : "rgba(255, 255, 255, 0.12)");
+    panel.style.setProperty("--panel-solid-shadow", "0 18px 60px rgba(0, 0, 0, 0.32)");
+    panel.style.borderStyle = border;
+    panel.style.borderWidth = border === "none" ? "0px" : "1px";
+  }
+
   overlay.style.color = textCol;
-  document.querySelectorAll(".status-label, .rank-name, .rr-value, .rank-separator, .rank-subtitle, .rr-label, label, .config-heading, .config-status").forEach(el => {
+  overlay.querySelectorAll(".status-label, .rank-name, .rr-value, .rank-separator, .rank-subtitle, .rr-label, .status, .last-updated").forEach(el => {
     el.style.color = textCol;
   });
+  syncConfigPanelLayout();
 }
 
 function applyStatusVisibility(showConnection, showLastUpdated) {
@@ -751,7 +1327,7 @@ function applyStatusVisibility(showConnection, showLastUpdated) {
 function clampMatchResults(value) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 10;
-  return Math.max(1, Math.min(12, Math.floor(parsed)));
+  return Math.max(1, Math.min(10, Math.floor(parsed)));
 }
 
 function normalizeTrackingResetTime(value) {
@@ -766,11 +1342,28 @@ function normalizeTrackingResetTime(value) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
 
-function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOverlay, showConnection, showLastUpdated, showAgentIconsValue, configuredMaxMatchResults, trackingDayResetTime, player) {
+function populateTrackingResetTimeOptions(selectedTime) {
+  const select = document.getElementById("trackingDayResetTimeInput");
+  if (!select) return;
+
+  const normalizedSelected = normalizeTrackingResetTime(selectedTime) || DEFAULT_TRACKING_RESET_TIME;
+  const options = [];
+
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+      options.push(`<option value="${value}">${value}</option>`);
+    }
+  }
+
+  select.innerHTML = options.join("");
+  select.value = normalizedSelected;
+}
+
+function setConfigInputs(backgroundColor, textColor, borderStyle, overlayBackgroundTheme, transparentOverlay, glassBlurPx, glassTintColor, glassTintOpacity, glassBorderOpacity, glassShadowStrength, showConnection, showLastUpdated, showAgentIconsValue, configuredMaxMatchResults, trackingDayResetTime, player) {
   const bgInput = document.getElementById("bgColorInput");
   const textInput = document.getElementById("textColorInput");
-  const borderInput = document.getElementById("borderStyleInput");
-  const transparentInput = document.getElementById("transparentOverlayInput");
+  const overlayBackgroundThemeInput = document.getElementById("overlayBackgroundThemeInput");
   const showConnectionInput = document.getElementById("showConnectionInput");
   const showLastUpdatedInput = document.getElementById("showLastUpdatedInput");
   const showAgentIconsInput = document.getElementById("showAgentIconsInput");
@@ -779,10 +1372,36 @@ function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOve
   const playerNameInput = document.getElementById("playerNameInput");
   const playerTagInput = document.getElementById("playerTagInput");
   const playerRegionInput = document.getElementById("playerRegionInput");
+  const glassBlurPxInput = document.getElementById("glassBlurPxInput");
+  const glassTintColorInput = document.getElementById("glassTintColorInput");
+  const glassTintOpacityInput = document.getElementById("glassTintOpacityInput");
+  const glassBorderOpacityInput = document.getElementById("glassBorderOpacityInput");
+  const glassShadowStrengthInput = document.getElementById("glassShadowStrengthInput");
+  const bgColorButton = document.getElementById("bgColorButton");
+  const textColorButton = document.getElementById("textColorButton");
+  const glassTintColorButton = document.getElementById("glassTintColorButton");
   if (bgInput) bgInput.value = backgroundColor || DEFAULT_BG_COLOR;
   if (textInput) textInput.value = textColor || DEFAULT_TEXT_COLOR;
-  if (borderInput) borderInput.value = borderStyle || DEFAULT_BORDER_STYLE;
-  if (transparentInput) transparentInput.checked = Boolean(transparentOverlay);
+  if (bgInput && bgColorButton) setColorCircleButtonValue(bgColorButton, bgInput.value);
+  if (textInput && textColorButton) setColorCircleButtonValue(textColorButton, textInput.value);
+  if (overlayBackgroundThemeInput) {
+    overlayBackgroundThemeInput.value = normalizeOverlayBackgroundTheme(overlayBackgroundTheme, transparentOverlay);
+    toggleGlassConfigVisibility(overlayBackgroundThemeInput.value);
+  }
+  const normalizedGlassSettings = getNormalizedGlassSettings({
+    glassBlurPx,
+    glassTintColor,
+    glassTintOpacity,
+    glassBorderOpacity,
+    glassShadowStrength
+  });
+  if (glassBlurPxInput) glassBlurPxInput.value = String(normalizedGlassSettings.blurPx);
+  if (glassTintColorInput) glassTintColorInput.value = String(normalizedGlassSettings.tintColor);
+  if (glassTintOpacityInput) glassTintOpacityInput.value = String(normalizedGlassSettings.tintOpacity);
+  if (glassBorderOpacityInput) glassBorderOpacityInput.value = String(normalizedGlassSettings.borderOpacity);
+  if (glassShadowStrengthInput) glassShadowStrengthInput.value = String(normalizedGlassSettings.shadowStrength);
+  if (glassTintColorInput && glassTintColorButton) setColorCircleButtonValue(glassTintColorButton, glassTintColorInput.value);
+  updateGlassRangeValueBubbles();
   if (showConnectionInput && typeof showConnection === "boolean") showConnectionInput.checked = showConnection;
   if (showLastUpdatedInput && typeof showLastUpdated === "boolean") showLastUpdatedInput.checked = showLastUpdated;
   if (showAgentIconsInput && typeof showAgentIconsValue === "boolean") showAgentIconsInput.checked = showAgentIconsValue;
@@ -790,11 +1409,12 @@ function setConfigInputs(backgroundColor, textColor, borderStyle, transparentOve
   maxMatchResults = clampMatchResults(configuredMaxMatchResults);
   if (maxMatchResultsInput) maxMatchResultsInput.value = String(maxMatchResults);
   if (trackingDayResetTimeInput) {
-    trackingDayResetTimeInput.value = normalizeTrackingResetTime(trackingDayResetTime) || DEFAULT_TRACKING_RESET_TIME;
+    populateTrackingResetTimeOptions(trackingDayResetTime);
   }
   if (playerNameInput) playerNameInput.value = player?.name || "";
   if (playerTagInput) playerTagInput.value = player?.tag || "";
   if (playerRegionInput) playerRegionInput.value = player?.region || "ap";
+  syncConfigPanelLayout();
 }
 
 async function fetchWithFallback(pathOrUrl, options) {
@@ -832,7 +1452,13 @@ function loadConfig() {
         data.backgroundColor,
         data.textColor,
         data.borderStyle,
+        data.overlayBackgroundTheme,
         data.transparentOverlay,
+        data.glassBlurPx,
+        data.glassTintColor,
+        data.glassTintOpacity,
+        data.glassBorderOpacity,
+        data.glassShadowStrength,
         data.showConnection,
         data.showLastUpdated,
         data.showAgentIcons,
@@ -840,7 +1466,13 @@ function loadConfig() {
         data.trackingDayResetTime,
         data.player
       );
-      applyTheme(data.backgroundColor, data.textColor, data.borderStyle, data.transparentOverlay);
+      applyTheme(data.backgroundColor, data.textColor, data.borderStyle, data.overlayBackgroundTheme, data.transparentOverlay, {
+        glassBlurPx: data.glassBlurPx,
+        glassTintColor: data.glassTintColor,
+        glassTintOpacity: data.glassTintOpacity,
+        glassBorderOpacity: data.glassBorderOpacity,
+        glassShadowStrength: data.glassShadowStrength
+      });
       const showConnectionValue = typeof data.showConnection === "boolean"
         ? data.showConnection
         : document.getElementById("showConnectionInput")?.checked;
@@ -861,8 +1493,14 @@ function loadConfig() {
 function saveConfig() {
   const backgroundColor = document.getElementById("bgColorInput").value;
   const textColor = document.getElementById("textColorInput").value;
-  const borderStyle = document.getElementById("borderStyleInput").value;
-  const transparentOverlay = document.getElementById("transparentOverlayInput").checked;
+  const borderStyle = document.getElementById("borderStyleInput")?.value || DEFAULT_BORDER_STYLE;
+  const overlayBackgroundTheme = normalizeOverlayBackgroundTheme(document.getElementById("overlayBackgroundThemeInput")?.value, false);
+  const transparentOverlay = overlayBackgroundTheme === "transparent";
+  const glassBlurPx = clampNumber(document.getElementById("glassBlurPxInput")?.value, 4, 20, DEFAULT_GLASS_BLUR_PX);
+  const glassTintColor = normalizeHexColor(document.getElementById("glassTintColorInput")?.value) || DEFAULT_GLASS_TINT_COLOR;
+  const glassTintOpacity = clampNumber(document.getElementById("glassTintOpacityInput")?.value, 0.05, 0.35, DEFAULT_GLASS_TINT_OPACITY);
+  const glassBorderOpacity = clampNumber(document.getElementById("glassBorderOpacityInput")?.value, 0.12, 0.7, DEFAULT_GLASS_BORDER_OPACITY);
+  const glassShadowStrength = clampNumber(document.getElementById("glassShadowStrengthInput")?.value, 0.2, 0.8, DEFAULT_GLASS_SHADOW_STRENGTH);
   const showConnection = document.getElementById("showConnectionInput").checked;
   const showLastUpdated = document.getElementById("showLastUpdatedInput").checked;
   const showAgentIconsValue = document.getElementById("showAgentIconsInput").checked;
@@ -896,6 +1534,12 @@ function saveConfig() {
       backgroundColor,
       textColor,
       borderStyle,
+      overlayBackgroundTheme,
+      glassBlurPx,
+      glassTintColor,
+      glassTintOpacity,
+      glassBorderOpacity,
+      glassShadowStrength,
       transparentOverlay,
       showConnection,
       showLastUpdated,
@@ -910,7 +1554,13 @@ function saveConfig() {
       if (data.success) {
         statusEl.textContent = "Saved!";
         statusEl.classList.add("success");
-        applyTheme(backgroundColor, textColor, borderStyle, transparentOverlay);
+        applyTheme(backgroundColor, textColor, borderStyle, overlayBackgroundTheme, transparentOverlay, {
+          glassBlurPx,
+          glassTintColor,
+          glassTintOpacity,
+          glassBorderOpacity,
+          glassShadowStrength
+        });
         applyStatusVisibility(showConnection, showLastUpdated);
         showAgentIcons = showAgentIconsValue;
         maxMatchResults = maxMatchResultsValue;
@@ -998,6 +1648,7 @@ function renderMatches(matches) {
   historyEl.innerHTML = "";
   if (!Array.isArray(matches) || matches.length === 0) {
     if (historyRowEl) historyRowEl.style.display = "none";
+    syncConfigPanelLayout();
     return;
   }
 
@@ -1026,6 +1677,7 @@ function renderMatches(matches) {
       : `${entry.result === "W" ? "Win" : "Loss"} ${text}${entry.agentName ? ` • ${entry.agentName}` : ""}`;
     historyEl.appendChild(item);
   });
+  syncConfigPanelLayout();
 }
 
 function renderAgentHistory(matches) {
@@ -1037,6 +1689,7 @@ function renderAgentHistory(matches) {
   const entries = Array.isArray(matches) ? matches.slice(0, LAST_AGENT_COUNT) : [];
   if (!showAgentIcons || entries.length === 0) {
     rowEl.style.display = "none";
+    syncConfigPanelLayout();
     return;
   }
 
@@ -1057,6 +1710,7 @@ function renderAgentHistory(matches) {
 
     historyEl.appendChild(item);
   });
+  syncConfigPanelLayout();
 }
 
 async function fetchRank() {
@@ -1071,7 +1725,26 @@ async function fetchRank() {
       throw new Error("Invalid overlay payload");
     }
 
-    applyTheme(json.backgroundColor, json.textColor, json.borderStyle, json.transparentOverlay);
+    const hasPayloadTheme = typeof json.overlayBackgroundTheme === "string" && json.overlayBackgroundTheme.trim() !== "";
+    const payloadTheme = hasPayloadTheme
+      ? normalizeOverlayBackgroundTheme(json.overlayBackgroundTheme, json.transparentOverlay)
+      : currentOverlayBackgroundTheme;
+    const payloadGlassSettings = {
+      glassBlurPx: Number.isFinite(Number(json.glassBlurPx)) ? Number(json.glassBlurPx) : currentGlassSettings.blurPx,
+      glassTintColor: normalizeHexColor(json.glassTintColor) || currentGlassSettings.tintColor,
+      glassTintOpacity: Number.isFinite(Number(json.glassTintOpacity)) ? Number(json.glassTintOpacity) : currentGlassSettings.tintOpacity,
+      glassBorderOpacity: Number.isFinite(Number(json.glassBorderOpacity)) ? Number(json.glassBorderOpacity) : currentGlassSettings.borderOpacity,
+      glassShadowStrength: Number.isFinite(Number(json.glassShadowStrength)) ? Number(json.glassShadowStrength) : currentGlassSettings.shadowStrength
+    };
+
+    applyTheme(
+      typeof json.backgroundColor === "string" ? json.backgroundColor : currentBackgroundColor,
+      typeof json.textColor === "string" ? json.textColor : currentTextColor,
+      typeof json.borderStyle === "string" ? json.borderStyle : currentBorderStyle,
+      payloadTheme,
+      json.transparentOverlay,
+      payloadGlassSettings
+    );
     document.getElementById("lastUpdated").textContent = `Last updated: ${formatTimestamp(json.lastUpdated)}`;
 
     if (!json.rank) {
@@ -1138,11 +1811,42 @@ async function fetchRank() {
   }
 }
 
-applyTheme(DEFAULT_BG_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_BORDER_STYLE, false);
+currentOverlayBackgroundTheme = getSavedThemeFromStorage();
+if (isOverlayOnlyMode() || isObsBrowser()) {
+  document.documentElement.classList.add("overlay-only");
+  document.body.classList.add("overlay-only");
+  if (shouldForceTransparentPanelInOverlayOnlyMode()) {
+    document.body.classList.add("overlay-only-force-transparent-panel");
+  }
+}
+applyTheme(DEFAULT_BG_COLOR, DEFAULT_TEXT_COLOR, DEFAULT_BORDER_STYLE, currentOverlayBackgroundTheme, false, currentGlassSettings);
+initializeColorCircleButtons();
+populateTrackingResetTimeOptions(DEFAULT_TRACKING_RESET_TIME);
+toggleGlassConfigVisibility(currentOverlayBackgroundTheme);
+updateGlassRangeValueBubbles();
+syncConfigPanelLayout();
 loadConfig();
 fetchRank();
 setInterval(fetchRank, 5000);
 document.getElementById("saveConfigBtn").addEventListener("click", saveConfig);
+["overlayBackgroundThemeInput"].forEach((id) => {
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.addEventListener("change", () => {
+    toggleGlassConfigVisibility(input.value);
+    previewThemeFromInputs();
+  });
+});
+["glassBlurPxInput", "glassTintOpacityInput", "glassBorderOpacityInput", "glassShadowStrengthInput"].forEach((id) => {
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.addEventListener("input", () => {
+    updateGlassRangeValueBubbles();
+    previewThemeFromInputs();
+  });
+});
+
+window.addEventListener("resize", syncConfigPanelLayout);
 </script>
 </body>
 </html>

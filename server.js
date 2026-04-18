@@ -3,6 +3,12 @@ const fsp = fs.promises;
 const path = require("path");
 const express = require("express");
 const fetch = require("node-fetch");
+const {
+  parseTrackingDayResetTime,
+  parseOverlayBackgroundTheme,
+  getTrackingWindowStart,
+  getMatchTimestamp
+} = require("./utils/config-helpers");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -18,7 +24,7 @@ try {
 app.use(express.json());
 
 const defaultConfig = {
-  player: { name: "CalmAimer", tag: "3973", region: "ap" },
+  player: { name: "YourName", tag: "0000", region: "ap" },
   apiKey: "HDEV-632cdd82-0292-44de-be24-2ca1315cf52c",
   pollIntervalMs: 30000,
   trackingDayResetTime: "00:00",
@@ -28,6 +34,12 @@ const defaultConfig = {
   backgroundColor: "#0c0f1b",
   textColor: "#eef2ff",
   borderStyle: "solid",
+  overlayBackgroundTheme: "solid",
+  glassBlurPx: 14,
+  glassTintColor: "#ffffff",
+  glassTintOpacity: 0.12,
+  glassBorderOpacity: 0.34,
+  glassShadowStrength: 0.42,
   transparentOverlay: false,
   showConnection: true,
   showLastUpdated: true,
@@ -36,6 +48,10 @@ const defaultConfig = {
 };
 
 let config = { ...defaultConfig };
+
+function isSafeHexColor(value) {
+  return typeof value === "string" && /^#([0-9A-F]{6}|[0-9A-F]{3})$/i.test(value);
+}
 
 try {
   if (fs.existsSync(CONFIG_PATH)) {
@@ -70,9 +86,48 @@ try {
     config.showAgentIcons = true;
     normalized = true;
   }
+  const normalizedOverlayBackgroundTheme = config.overlayBackgroundTheme == null
+    ? (config.transparentOverlay === true ? "transparent" : defaultConfig.overlayBackgroundTheme)
+    : parseOverlayBackgroundTheme(config.overlayBackgroundTheme);
+  if (config.overlayBackgroundTheme !== normalizedOverlayBackgroundTheme) {
+    config.overlayBackgroundTheme = normalizedOverlayBackgroundTheme;
+    normalized = true;
+  }
+  const normalizedTransparentOverlay = config.overlayBackgroundTheme === "transparent";
+  if (config.transparentOverlay !== normalizedTransparentOverlay) {
+    config.transparentOverlay = normalizedTransparentOverlay;
+    normalized = true;
+  }
   const normalizedTrackingDayResetTime = parseTrackingDayResetTime(config.trackingDayResetTime);
   if (config.trackingDayResetTime !== normalizedTrackingDayResetTime) {
     config.trackingDayResetTime = normalizedTrackingDayResetTime;
+    normalized = true;
+  }
+  const normalizedGlassBlurPx = Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx)));
+  if (config.glassBlurPx !== normalizedGlassBlurPx) {
+    config.glassBlurPx = normalizedGlassBlurPx;
+    normalized = true;
+  }
+  const normalizedGlassTintColor = isSafeHexColor(config.glassTintColor)
+    ? config.glassTintColor
+    : defaultConfig.glassTintColor;
+  if (config.glassTintColor !== normalizedGlassTintColor) {
+    config.glassTintColor = normalizedGlassTintColor;
+    normalized = true;
+  }
+  const normalizedGlassTintOpacity = Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity));
+  if (config.glassTintOpacity !== normalizedGlassTintOpacity) {
+    config.glassTintOpacity = normalizedGlassTintOpacity;
+    normalized = true;
+  }
+  const normalizedGlassBorderOpacity = Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity));
+  if (config.glassBorderOpacity !== normalizedGlassBorderOpacity) {
+    config.glassBorderOpacity = normalizedGlassBorderOpacity;
+    normalized = true;
+  }
+  const normalizedGlassShadowStrength = Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength));
+  if (config.glassShadowStrength !== normalizedGlassShadowStrength) {
+    config.glassShadowStrength = normalizedGlassShadowStrength;
     normalized = true;
   }
   const normalizedPoll = getConfiguredPollIntervalMs();
@@ -84,7 +139,7 @@ try {
     config.maxMatchResults = 10;
     normalized = true;
   } else {
-    const clamped = Math.max(1, Math.min(12, Math.floor(Number(config.maxMatchResults))));
+    const clamped = Math.max(1, Math.min(10, Math.floor(Number(config.maxMatchResults))));
     if (clamped !== config.maxMatchResults) {
       config.maxMatchResults = clamped;
       normalized = true;
@@ -125,65 +180,6 @@ function parseRetryAfterMs(response) {
   }
 
   return fallbackMs;
-}
-
-function parseTrackingDayResetTime(value) {
-  const fallback = defaultConfig.trackingDayResetTime;
-  if (typeof value !== "string") return fallback;
-  const trimmed = value.trim();
-  const match = /^(\d{1,2}):(\d{2})$/.exec(trimmed);
-  if (!match) return fallback;
-
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return fallback;
-  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return fallback;
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-}
-
-function getTrackingWindowStart(now, trackingDayResetTime) {
-  const [hoursRaw, minutesRaw] = parseTrackingDayResetTime(trackingDayResetTime).split(":");
-  const hours = Number(hoursRaw);
-  const minutes = Number(minutesRaw);
-
-  const start = new Date(now);
-  start.setSeconds(0, 0);
-  start.setHours(hours, minutes, 0, 0);
-
-  if (now < start) {
-    start.setDate(start.getDate() - 1);
-  }
-
-  return start;
-}
-
-function getMatchTimestamp(match) {
-  const metadata = match?.metadata || {};
-  const candidates = [
-    metadata.game_start,
-    metadata.started_at,
-    metadata.game_start_patched,
-    match?.started_at
-  ];
-
-  for (const candidate of candidates) {
-    if (typeof candidate === "number" && Number.isFinite(candidate)) {
-      const ms = candidate > 1e12 ? candidate : candidate * 1000;
-      const parsed = new Date(ms);
-      if (!Number.isNaN(parsed.getTime())) {
-        return parsed;
-      }
-    }
-    if (typeof candidate === "string" && candidate.trim()) {
-      const parsed = new Date(candidate);
-      if (!Number.isNaN(parsed.getTime())) {
-        return parsed;
-      }
-    }
-  }
-
-  return null;
 }
 
 async function fetchJsonOrThrow(url) {
@@ -262,6 +258,12 @@ let cache = {
   backgroundColor: config.backgroundColor,
   textColor: config.textColor,
   borderStyle: config.borderStyle,
+  overlayBackgroundTheme: parseOverlayBackgroundTheme(config.overlayBackgroundTheme),
+  glassBlurPx: Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx))),
+  glassTintColor: isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor,
+  glassTintOpacity: Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
+  glassBorderOpacity: Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity)),
+  glassShadowStrength: Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength)),
   transparentOverlay: config.transparentOverlay === true,
   showAgentIcons: config.showAgentIcons !== false,
   trackingDayResetTime: parseTrackingDayResetTime(config.trackingDayResetTime)
@@ -349,12 +351,18 @@ app.get("/config", (req, res) => {
     backgroundColor: config.backgroundColor || defaultConfig.backgroundColor,
     textColor: config.textColor || defaultConfig.textColor,
     borderStyle: config.borderStyle || defaultConfig.borderStyle,
+    overlayBackgroundTheme: parseOverlayBackgroundTheme(config.overlayBackgroundTheme),
+    glassBlurPx: Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx))),
+    glassTintColor: isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor,
+    glassTintOpacity: Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
+    glassBorderOpacity: Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity)),
+    glassShadowStrength: Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength)),
     transparentOverlay: config.transparentOverlay === true,
     showConnection: config.showConnection !== false,
     showAgentIcons: config.showAgentIcons !== false,
     showLastUpdated: config.showLastUpdated !== false,
     trackingDayResetTime: parseTrackingDayResetTime(config.trackingDayResetTime),
-    maxMatchResults: Math.max(1, Math.min(12, Math.floor(Number(config.maxMatchResults) || 10)))
+    maxMatchResults: Math.max(1, Math.min(10, Math.floor(Number(config.maxMatchResults) || 10)))
   });
 });
 
@@ -372,6 +380,29 @@ app.post("/config", (req, res) => {
   if (typeof req.body.borderStyle === "string" && allowedBorderStyles.includes(req.body.borderStyle)) {
     updates.borderStyle = req.body.borderStyle;
   }
+  if (typeof req.body.overlayBackgroundTheme === "string") {
+    updates.overlayBackgroundTheme = parseOverlayBackgroundTheme(req.body.overlayBackgroundTheme);
+    updates.transparentOverlay = updates.overlayBackgroundTheme === "transparent";
+  }
+  const parsedGlassBlurPx = Number(req.body.glassBlurPx);
+  if (Number.isFinite(parsedGlassBlurPx)) {
+    updates.glassBlurPx = Math.max(4, Math.min(20, Math.round(parsedGlassBlurPx)));
+  }
+  if (safeHex(req.body.glassTintColor)) {
+    updates.glassTintColor = req.body.glassTintColor;
+  }
+  const parsedGlassTintOpacity = Number(req.body.glassTintOpacity);
+  if (Number.isFinite(parsedGlassTintOpacity)) {
+    updates.glassTintOpacity = Math.max(0.05, Math.min(0.35, parsedGlassTintOpacity));
+  }
+  const parsedGlassBorderOpacity = Number(req.body.glassBorderOpacity);
+  if (Number.isFinite(parsedGlassBorderOpacity)) {
+    updates.glassBorderOpacity = Math.max(0.12, Math.min(0.7, parsedGlassBorderOpacity));
+  }
+  const parsedGlassShadowStrength = Number(req.body.glassShadowStrength);
+  if (Number.isFinite(parsedGlassShadowStrength)) {
+    updates.glassShadowStrength = Math.max(0.2, Math.min(0.8, parsedGlassShadowStrength));
+  }
   let transparentOverlay = req.body.transparentOverlay;
   if (typeof transparentOverlay === "string") {
     const normalized = transparentOverlay.trim().toLowerCase();
@@ -380,6 +411,9 @@ app.post("/config", (req, res) => {
   }
   if (typeof transparentOverlay === "boolean") {
     updates.transparentOverlay = transparentOverlay;
+    if (typeof updates.overlayBackgroundTheme !== "string") {
+      updates.overlayBackgroundTheme = transparentOverlay ? "transparent" : "solid";
+    }
   }
 
   let showConnection = req.body.showConnection;
@@ -421,7 +455,7 @@ app.post("/config", (req, res) => {
 
   const parsedMaxMatchResults = Number(req.body.maxMatchResults);
   if (Number.isFinite(parsedMaxMatchResults)) {
-    updates.maxMatchResults = Math.max(1, Math.min(12, Math.floor(parsedMaxMatchResults)));
+    updates.maxMatchResults = Math.max(1, Math.min(10, Math.floor(parsedMaxMatchResults)));
   }
 
   const playerPayload = req.body.player;
@@ -469,12 +503,18 @@ app.post("/config", (req, res) => {
     cache.backgroundColor = config.backgroundColor;
     cache.textColor = config.textColor;
     cache.borderStyle = config.borderStyle;
+    cache.overlayBackgroundTheme = parseOverlayBackgroundTheme(config.overlayBackgroundTheme);
+    cache.glassBlurPx = Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx)));
+    cache.glassTintColor = isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor;
+    cache.glassTintOpacity = Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity));
+    cache.glassBorderOpacity = Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity));
+    cache.glassShadowStrength = Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength));
     cache.transparentOverlay = config.transparentOverlay === true;
     cache.showConnection = config.showConnection !== false;
     cache.showAgentIcons = config.showAgentIcons !== false;
     cache.showLastUpdated = config.showLastUpdated !== false;
     cache.trackingDayResetTime = parseTrackingDayResetTime(config.trackingDayResetTime);
-    cache.maxMatchResults = Math.max(1, Math.min(12, Math.floor(Number(config.maxMatchResults) || 10)));
+    cache.maxMatchResults = Math.max(1, Math.min(10, Math.floor(Number(config.maxMatchResults) || 10)));
     cache.player = config.player;
 
     if (playerChanged) {
@@ -498,6 +538,12 @@ app.post("/config", (req, res) => {
       success: true,
       config: updates,
       transparentOverlay: cache.transparentOverlay,
+      overlayBackgroundTheme: cache.overlayBackgroundTheme,
+      glassBlurPx: cache.glassBlurPx,
+      glassTintColor: cache.glassTintColor,
+      glassTintOpacity: cache.glassTintOpacity,
+      glassBorderOpacity: cache.glassBorderOpacity,
+      glassShadowStrength: cache.glassShadowStrength,
       showConnection: cache.showConnection,
       showAgentIcons: cache.showAgentIcons,
       showLastUpdated: cache.showLastUpdated,
@@ -519,7 +565,7 @@ async function fetchData() {
       `${API_BASE}/v1/mmr/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}?api_key=${config.apiKey}`
     );
 
-    const requestedMatchSize = Math.max(10, Math.min(12, Math.floor(Number(config.maxMatchResults) || 10)));
+    const requestedMatchSize = 10;
     const matchJson = await fetchJsonOrThrow(
       `${API_BASE}/v3/matches/${activePlayer.region}/${activePlayer.name}/${activePlayer.tag}?size=${requestedMatchSize}&api_key=${config.apiKey}`
     );
@@ -642,12 +688,18 @@ async function fetchData() {
       backgroundColor: config.backgroundColor || "#0c0f1b",
       textColor: config.textColor || "#eef2ff",
       borderStyle: config.borderStyle || "solid",
+      overlayBackgroundTheme: parseOverlayBackgroundTheme(config.overlayBackgroundTheme),
+      glassBlurPx: Math.max(4, Math.min(20, Math.round(Number(config.glassBlurPx) || defaultConfig.glassBlurPx))),
+      glassTintColor: isSafeHexColor(config.glassTintColor) ? config.glassTintColor : defaultConfig.glassTintColor,
+      glassTintOpacity: Math.max(0.05, Math.min(0.35, Number(config.glassTintOpacity) || defaultConfig.glassTintOpacity)),
+      glassBorderOpacity: Math.max(0.12, Math.min(0.7, Number(config.glassBorderOpacity) || defaultConfig.glassBorderOpacity)),
+      glassShadowStrength: Math.max(0.2, Math.min(0.8, Number(config.glassShadowStrength) || defaultConfig.glassShadowStrength)),
       transparentOverlay: config.transparentOverlay === true,
       showConnection: config.showConnection !== false,
       showAgentIcons: config.showAgentIcons !== false,
       showLastUpdated: config.showLastUpdated !== false,
       trackingDayResetTime: parseTrackingDayResetTime(config.trackingDayResetTime),
-      maxMatchResults: Math.max(1, Math.min(12, Math.floor(Number(config.maxMatchResults) || 10)))
+      maxMatchResults: Math.max(1, Math.min(10, Math.floor(Number(config.maxMatchResults) || 10)))
     };
     rateLimitedUntil = 0;
     consecutiveRateLimits = 0;
