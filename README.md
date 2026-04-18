@@ -137,6 +137,7 @@ Default `rankImageBasePath` is `/assets/rank-images/` and points to bundled rank
 
 - Run `npm run check:secrets` before pushing.
 - The guard fails if `config.json` contains a non-empty `apiKey` or if a real HenrikDev key pattern is found in repository files.
+- Follow `RELEASE_RULES.md` for mandatory release/tag workflow.
 
 ## Troubleshooting
 

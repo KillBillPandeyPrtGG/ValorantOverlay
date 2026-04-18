@@ -4,7 +4,11 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
-## [1.2.2] - 2026-04-18
+## [1.3.1] - 2026-04-18
+
+### Notes
+- Corrective release after existing `v1.3.0` tag to maintain semantic version ordering.
+- Supersedes mistaken `v1.2.2` release numbering.
 
 ### Added
 - Added API key controls directly in overlay settings (`HenrikDev API key`) with masked display and eye-toggle visibility.
