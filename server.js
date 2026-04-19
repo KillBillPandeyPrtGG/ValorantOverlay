@@ -5,10 +5,9 @@ const express = require("express");
 const fetch = require("node-fetch");
 const {
   parseTrackingDayResetTime,
-  parseOverlayBackgroundTheme,
-  getTrackingWindowStart,
-  getMatchTimestamp
+  parseOverlayBackgroundTheme
 } = require("./utils/config-helpers");
+const { filterCompetitiveMatches, processMatches } = require("./utils/match-processing");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -274,7 +273,7 @@ if (rankImageDir && fs.existsSync(rankImageDir)) {
 let cache = {
   rank: null,
   matches: [],
-  stats: { wins: 0, losses: 0, streak: 0, type: null },
+  stats: { wins: 0, losses: 0 },
   lastUpdated: null,
   status: "loading",
   message: "Waiting for first update...",
@@ -553,7 +552,7 @@ app.post("/config", (req, res) => {
     if (playerChanged || apiKeyChanged) {
       cache.rank = null;
       cache.matches = [];
-      cache.stats = { wins: 0, losses: 0, streak: 0, type: null };
+      cache.stats = { wins: 0, losses: 0 };
       cache.lastUpdated = null;
       cache.status = "loading";
       cache.message = playerChanged
@@ -640,82 +639,32 @@ async function fetchData() {
       );
     }
 
-    let wins = 0, losses = 0, streak = 0, type = null;
-    const results = [];
-    let firstValidMatch = true;
     const previousPointsByMatchId = new Map(
       (Array.isArray(cache.matches) ? cache.matches : [])
         .filter(item => item && item.matchId && typeof item.points === "number")
         .map(item => [item.matchId, item.points])
     );
 
-    const trackingWindowStart = getTrackingWindowStart(new Date(), config.trackingDayResetTime);
     const matchesToProcess = hasMatchData
-      ? matchData.filter((match) => {
-          const modeId = String(match?.metadata?.mode_id || "").toLowerCase();
-          const modeName = String(match?.metadata?.mode || "").toLowerCase();
-          const isCompetitive = modeId === "competitive" || modeName === "competitive";
-          if (!isCompetitive) return false;
-
-          const matchTime = getMatchTimestamp(match);
-          if (!matchTime) return true;
-          return matchTime >= trackingWindowStart;
-        })
+      ? filterCompetitiveMatches(matchData, config.trackingDayResetTime)
       : [];
 
-    for (let index = 0; index < matchesToProcess.length; index++) {
-      const match = matchesToProcess[index];
-      const player = match.players.all_players.find(
-        p => p.name === activePlayer.name && p.tag === activePlayer.tag
-      );
-      if (!player) continue;
-
-      const matchId = match?.metadata?.matchid || null;
-
-      const winningTeam = match.teams.red.has_won ? "Red" : "Blue";
-      const isWin = player.team === winningTeam;
-      const historyChange = matchId ? mmrByMatchId.get(matchId) : undefined;
-      let mmrChange = typeof historyChange === "number" ? historyChange : null;
-
-      if (mmrChange === null && matchId && previousPointsByMatchId.has(matchId)) {
-        mmrChange = previousPointsByMatchId.get(matchId);
-      }
-
-      if (mmrChange === null && index === 0 && typeof mmrJson?.data?.mmr_change_to_last_game === "number") {
-        mmrChange = mmrJson.data.mmr_change_to_last_game;
-      }
-
-      const rawAgentIcon = player.assets?.agent?.small || null;
-      const cachedAgentIcon = await resolveCachedAgentIconUrl(rawAgentIcon);
-
-      results.push({
-        matchId,
-        result: isWin ? "W" : "L",
-        points: mmrChange,
-        agentIcon: cachedAgentIcon,
-        agentName: player.character || null
-      });
-
-      if (isWin) wins++; else losses++;
-
-      if (firstValidMatch) {
-        type = isWin ? "win" : "loss";
-        streak = 1;
-        firstValidMatch = false;
-      } else if ((isWin && type === "win") || (!isWin && type === "loss")) {
-        streak++;
-      } else {
-        break;
-      }
-    }
+    const { results, wins, losses } = await processMatches(
+      matchesToProcess,
+      activePlayer,
+      mmrByMatchId,
+      previousPointsByMatchId,
+      mmrJson?.data?.mmr_change_to_last_game ?? null,
+      resolveCachedAgentIconUrl
+    );
 
     const nextMatches = hasMatchData
       ? results
       : (Array.isArray(cache.matches) ? cache.matches : []);
 
     const nextStats = hasMatchData
-      ? { wins, losses, streak, type }
-      : (cache.stats || { wins: 0, losses: 0, streak: 0, type: null });
+      ? { wins, losses }
+      : (cache.stats || { wins: 0, losses: 0 });
 
     cache = {
       rank: mmrJson.data,

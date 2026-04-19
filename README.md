@@ -26,6 +26,14 @@ It shows live rank, RR, match-point history, recent agents, and configurable UI 
 |- server.js
 |- package.json
 |- config.example.json
+|- utils/
+|  |- config-helpers.js
+|  `- match-processing.js
+|- tests/
+|  |- config-helpers.test.js
+|  |- match-processing.test.js
+|  |- overlay-ui.test.js
+|  `- secrets-guard.test.js
 `- overlay/
    |- index.html
    |- assets/

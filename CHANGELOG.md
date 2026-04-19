@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 The format is based on Keep a Changelog and this project follows Semantic Versioning.
 
+## [1.3.3] - 2026-04-19
+
+### Fixed
+- Fixed match results and agent icons only showing for the first few matches due to an early `break` in the match-processing loop that exited when the win/loss streak ended.
+- Fixed match history randomly changing between polls caused by the streak break point shifting with varying API response ordering.
+
+### Changed
+- Removed unused streak calculation logic (`streak`, `type`) from server match processing and cache since the overlay does not display streaks.
+- Extracted match-processing logic into `utils/match-processing.js` (`filterCompetitiveMatches`, `processMatches`) for testability.
+- Reduced match-point history box size in the overlay (smaller padding, height, and font).
+
+### Added
+- Added `tests/match-processing.test.js` with 17 tests covering competitive filtering, win/loss counting, MMR resolution fallbacks, agent icon handling, and edge cases.
+
 ## [1.3.1] - 2026-04-18
 
 ### Notes
